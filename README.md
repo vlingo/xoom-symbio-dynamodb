@@ -31,7 +31,7 @@ We welcome you to add support for your favorite database!
 ```gradle
 dependencies {
     compile 'io.vlingo:vlingo-symbio:0.3.2'
-    compile 'io.vlingo:vlingo-symbio-dynamodb:0.3.2'
+    compile 'io.vlingo:vlingo-symbio-dynamodb:0.3.0'
 }
 
 repositories {
