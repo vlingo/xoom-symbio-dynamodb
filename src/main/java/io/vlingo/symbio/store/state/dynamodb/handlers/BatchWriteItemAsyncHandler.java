@@ -19,27 +19,31 @@ public class BatchWriteItemAsyncHandler<T> implements AsyncHandler<BatchWriteIte
     private final State<T> state;
     private final StateStore.WriteResultInterest<T> interest;
     private final StateStore.Dispatchable<T> dispatchable;
-    private final StateStore.Dispatcher dispatcher;
+    //private final StateStore.Dispatcher dispatcher;
     private final State<T> nullState;
+    private final Object object;
     private final Function<StateStore.Dispatchable<T>, Void> dispatchState;
 
-    public BatchWriteItemAsyncHandler(State<T> state, StateStore.WriteResultInterest<T> interest, StateStore.Dispatchable<T> dispatchable, StateStore.Dispatcher dispatcher, State<T> nullState, Function<StateStore.Dispatchable<T>, Void> dispatchState) {
+    public BatchWriteItemAsyncHandler(State<T> state, StateStore.WriteResultInterest<T> interest, final Object object, StateStore.Dispatchable<T> dispatchable, StateStore.Dispatcher dispatcher, State<T> nullState, Function<StateStore.Dispatchable<T>, Void> dispatchState) {
         this.state = state;
         this.interest = interest;
+        this.object = object;
         this.dispatchable = dispatchable;
-        this.dispatcher = dispatcher;
+        //this.dispatcher = dispatcher;
         this.nullState = nullState;
         this.dispatchState = dispatchState;
     }
 
     @Override
     public void onError(Exception e) {
-        interest.writeResultedIn(StateStore.Result.NoTypeStore, new IllegalStateException(e), state.id, nullState);
+        interest.writeResultedIn(StateStore.Result.NoTypeStore, new IllegalStateException(e), state.id, nullState, object);
     }
 
     @Override
     public void onSuccess(BatchWriteItemRequest request, BatchWriteItemResult batchWriteItemResult) {
-        interest.writeResultedIn(StateStore.Result.Success, state.id, state);
+        interest.writeResultedIn(StateStore.Result.Success, state.id, state, object);
         dispatchState.apply(dispatchable);
+        // TODO: Must know binary/text type to dispatch, but this is generic class
+        //dispatcher.dispatch(state.id, state);
     }
 }

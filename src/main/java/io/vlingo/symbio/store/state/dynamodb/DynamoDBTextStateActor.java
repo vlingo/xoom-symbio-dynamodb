@@ -22,12 +22,22 @@ public class DynamoDBTextStateActor extends DynamoDBStateActor<String> implement
 
     @Override
     public void read(String id, Class<?> type, ReadResultInterest<String> interest) {
-        doGenericRead(id, type, interest);
+        doGenericRead(id, type, interest, null);
+    }
+
+    @Override
+    public void read(String id, Class<?> type, ReadResultInterest<String> interest, final Object object) {
+        doGenericRead(id, type, interest, object);
     }
 
     @Override
     public void write(State<String> state, WriteResultInterest<String> interest) {
-        doGenericWrite(state, interest);
+        doGenericWrite(state, interest, null);
+    }
+
+    @Override
+    public void write(State<String> state, WriteResultInterest<String> interest, final Object object) {
+        doGenericWrite(state, interest, object);
     }
 
     @Override

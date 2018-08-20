@@ -71,11 +71,11 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
         return tableName;
     }
 
-    protected final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest<T> interest) {
-        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<T>(id, interest, nullState, recordAdapter::unmarshallState));
+    protected final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest<T> interest, final Object object) {
+        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<T>(id, interest, object, nullState, recordAdapter::unmarshallState));
     }
 
-    protected final void doGenericWrite(State<T> state, StateStore.WriteResultInterest<T> interest) {
+    protected final void doGenericWrite(State<T> state, StateStore.WriteResultInterest<T> interest, final Object object) {
         String tableName = tableFor(state.typed());
         createTableInterest.createEntityTable(dynamodb, tableName);
 
@@ -85,11 +85,11 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
                 try {
                     State<T> savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > state.dataVersion) {
-                        interest.writeResultedIn(StateStore.Result.ConcurrentyViolation, state.id, savedState);
+                        interest.writeResultedIn(StateStore.Result.ConcurrentyViolation, state.id, savedState, object);
                         return;
                     }
                 } catch (Exception e) {
-                    interest.writeResultedIn(StateStore.Result.Failure, state.id, state);
+                    interest.writeResultedIn(StateStore.Result.Failure, state.id, state, object);
                     return;
                 }
             }
@@ -101,7 +101,7 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(state, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
-        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<>(state, interest, dispatchable, dispatcher, nullState, this::doDispatch));
+        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<>(state, interest, object, dispatchable, dispatcher, nullState, this::doDispatch));
     }
 
     protected GetItemRequest readRequestFor(String id, Class<?> type) {

@@ -22,12 +22,22 @@ public class DynamoDBBinaryStateActor extends DynamoDBStateActor<byte[]> impleme
 
     @Override
     public void read(String id, Class<?> type, ReadResultInterest<byte[]> interest) {
-        doGenericRead(id, type, interest);
+        doGenericRead(id, type, interest, null);
+    }
+
+    @Override
+    public void read(String id, Class<?> type, ReadResultInterest<byte[]> interest, final Object object) {
+        doGenericRead(id, type, interest, object);
     }
 
     @Override
     public void write(State<byte[]> state, WriteResultInterest<byte[]> interest) {
-        doGenericWrite(state, interest);
+        doGenericWrite(state, interest, null);
+    }
+
+    @Override
+    public void write(State<byte[]> state, WriteResultInterest<byte[]> interest, final Object object) {
+        doGenericWrite(state, interest, object);
     }
 
     @Override
