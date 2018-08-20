@@ -84,6 +84,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
     protected abstract RecordAdapter<K> recordAdapter();
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() {
         createTable(TABLE_NAME);
         createTable(DISPATCHABLE_TABLE_NAME);
@@ -123,10 +124,10 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
     public void testThatWritingAndReadingTransactionReturnsCurrentState() {
         State<K> currentState = randomState();
         doWrite(stateStore, currentState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, currentState.id, currentState);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, currentState.id, currentState, null);
 
         doRead(stateStore, currentState.id, currentState.typed(), readResultInterest);
-        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(StateStore.Result.Success, currentState.id, currentState);
+        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(StateStore.Result.Success, currentState.id, currentState, null);
     }
 
     @Test
@@ -147,7 +148,8 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
                 eq(StateStore.Result.NoTypeStore),
                 any(IllegalStateException.class),
                 eq(state.id),
-                eq(nullState())
+                eq(nullState()),
+                eq(null)
         );
     }
 
@@ -159,7 +161,8 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(
                 StateStore.Result.NotFound,
                 state.id,
-                nullState()
+                nullState(),
+                null
         );
     }
 
@@ -173,7 +176,8 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
                 eq(StateStore.Result.NoTypeStore),
                 any(IllegalStateException.class),
                 eq(state.id),
-                eq(nullState())
+                eq(nullState()),
+                eq(null)
         );
     }
 
@@ -183,10 +187,10 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         State<K> newState = newFor(oldState);
 
         doWrite(stateStore, newState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, newState.id, newState);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, newState.id, newState, null);
 
         doWrite(stateStore, oldState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.ConcurrentyViolation, newState.id, newState);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.ConcurrentyViolation, newState.id, newState, null);
     }
 
     @Test
@@ -194,7 +198,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         State<K> state = randomState();
 
         doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state, null);
 
         verifyDispatched(dispatcher, state.type + ":" + state.id, state);
 //        verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(state.type + ":" + state.id, state.asTextState());
@@ -205,7 +209,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         State<K> state = randomState();
 
         doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state, null);
 
         StateStore.Dispatchable<K> dispatchable = dispatchableByState(state);
         Assert.assertEquals(state, dispatchable.state);
@@ -216,7 +220,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         State<K> state = randomState();
 
         doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state, null);
 
         StateStore.Dispatchable<K> dispatchable = dispatchableByState(state);
 
@@ -230,7 +234,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, K> {
         State<K> state = randomState();
 
         doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(StateStore.Result.Success, state.id, state, null);
 
         StateStore.Dispatchable<K> dispatchable = dispatchableByState(state);
         dispatcherControl.confirmDispatched(dispatchable.id, confirmDispatchedResultInterest);
