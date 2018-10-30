@@ -11,6 +11,7 @@ import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemResult;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.Result;
 
 public class ConfirmDispatchableAsyncHandler implements AsyncHandler<DeleteItemRequest, DeleteItemResult> {
     private final String dispatchId;
@@ -23,11 +24,11 @@ public class ConfirmDispatchableAsyncHandler implements AsyncHandler<DeleteItemR
 
     @Override
     public void onError(Exception e) {
-        interest.confirmDispatchedResultedIn(StateStore.Result.Failure, dispatchId);
+        interest.confirmDispatchedResultedIn(Result.Failure, dispatchId);
     }
 
     @Override
     public void onSuccess(DeleteItemRequest request, DeleteItemResult deleteItemResult) {
-        interest.confirmDispatchedResultedIn(StateStore.Result.Success, dispatchId);
+        interest.confirmDispatchedResultedIn(Result.Success, dispatchId);
     }
 }
