@@ -12,6 +12,7 @@ import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.Result;
 
 import java.util.function.Function;
 
@@ -36,12 +37,12 @@ public class BatchWriteItemAsyncHandler<T> implements AsyncHandler<BatchWriteIte
 
     @Override
     public void onError(Exception e) {
-        interest.writeResultedIn(StateStore.Result.NoTypeStore, new IllegalStateException(e), state.id, nullState, object);
+        interest.writeResultedIn(Result.NoTypeStore, new IllegalStateException(e), state.id, nullState, object);
     }
 
     @Override
     public void onSuccess(BatchWriteItemRequest request, BatchWriteItemResult batchWriteItemResult) {
-        interest.writeResultedIn(StateStore.Result.Success, state.id, state, object);
+        interest.writeResultedIn(Result.Success, state.id, state, object);
         dispatchState.apply(dispatchable);
         // TODO: Must know binary/text type to dispatch, but this is generic class
         //dispatcher.dispatch(state.id, state);
