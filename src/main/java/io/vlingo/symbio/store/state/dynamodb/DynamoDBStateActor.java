@@ -11,6 +11,7 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.*;
 import io.vlingo.actors.Actor;
 import io.vlingo.symbio.State;
+import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
@@ -85,11 +86,11 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
                 try {
                     State<T> savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > state.dataVersion) {
-                        interest.writeResultedIn(StateStore.Result.ConcurrentyViolation, state.id, savedState, object);
+                        interest.writeResultedIn(Result.ConcurrentyViolation, state.id, savedState, object);
                         return;
                     }
                 } catch (Exception e) {
-                    interest.writeResultedIn(StateStore.Result.Failure, state.id, state, object);
+                    interest.writeResultedIn(Result.Failure, state.id, state, object);
                     return;
                 }
             }
