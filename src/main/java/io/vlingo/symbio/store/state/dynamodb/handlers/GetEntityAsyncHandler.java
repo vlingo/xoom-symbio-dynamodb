@@ -13,6 +13,7 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.Result;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -34,22 +35,22 @@ public class GetEntityAsyncHandler<T> implements AsyncHandler<GetItemRequest, Ge
 
     @Override
     public void onError(Exception e) {
-        interest.readResultedIn(StateStore.Result.NoTypeStore, new IllegalStateException(e), id, nullState, null);
+        interest.readResultedIn(Result.NoTypeStore, new IllegalStateException(e), id, nullState, null);
     }
 
     @Override
     public void onSuccess(GetItemRequest request, GetItemResult getItemResult) {
         Map<String, AttributeValue> item = getItemResult.getItem();
         if (item == null) {
-            interest.readResultedIn(StateStore.Result.NotFound, id, nullState, null);
+            interest.readResultedIn(Result.NotFound, id, nullState, null);
             return;
         }
 
         try {
             State<T> state = unmarshaller.apply(item);
-            interest.readResultedIn(StateStore.Result.Success, id, state, object);
+            interest.readResultedIn(Result.Success, id, state, object);
         } catch (Exception e) {
-            interest.readResultedIn(StateStore.Result.Failure, e, id, nullState, object);
+            interest.readResultedIn(Result.Failure, e, id, nullState, object);
         }
     }
 }
