@@ -1,6 +1,12 @@
 package io.vlingo.symbio.store.state.dynamodb;
 
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.util.UUID;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.Protocols;
 import io.vlingo.actors.World;
@@ -12,11 +18,6 @@ import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.dynamodb.adapters.BinaryStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
-
-import java.util.UUID;
-
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryStateStore, byte[]> {
     @Override
