@@ -7,11 +7,26 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
+import static java.util.Collections.singletonList;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-import com.amazonaws.services.dynamodbv2.model.*;
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
+import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
+import com.amazonaws.services.dynamodbv2.model.PutRequest;
+import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+import com.amazonaws.services.dynamodbv2.model.WriteRequest;
+
 import io.vlingo.actors.Actor;
+import io.vlingo.common.Failure;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.Result;
+import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
@@ -20,12 +35,6 @@ import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHa
 import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
-
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Collections.singletonList;
 
 public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.DispatcherControl {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
@@ -86,11 +95,11 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
                 try {
                     State<T> savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > state.dataVersion) {
-                        interest.writeResultedIn(Result.ConcurrentyViolation, state.id, savedState, object);
+                        interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "Concurrent modification of: " + state.id)), state.id, savedState, object);
                         return;
                     }
                 } catch (Exception e) {
-                    interest.writeResultedIn(Result.Failure, state.id, state, object);
+                    interest.writeResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), state.id, state, object);
                     return;
                 }
             }

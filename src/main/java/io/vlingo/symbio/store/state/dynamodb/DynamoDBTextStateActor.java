@@ -8,6 +8,7 @@
 package io.vlingo.symbio.store.state.dynamodb;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.state.TextStateStore;
 import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;

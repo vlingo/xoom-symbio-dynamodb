@@ -7,16 +7,20 @@
 
 package io.vlingo.symbio.store.state.dynamodb.handlers;
 
+import java.util.Map;
+import java.util.function.Function;
+
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.Result;
 
-import java.util.Map;
-import java.util.function.Function;
+import io.vlingo.common.Failure;
+import io.vlingo.common.Success;
+import io.vlingo.symbio.State;
+import io.vlingo.symbio.store.Result;
+import io.vlingo.symbio.store.StorageException;
+import io.vlingo.symbio.store.state.StateStore;
 
 public class GetEntityAsyncHandler<T> implements AsyncHandler<GetItemRequest, GetItemResult> {
     private final String id;
@@ -35,22 +39,22 @@ public class GetEntityAsyncHandler<T> implements AsyncHandler<GetItemRequest, Ge
 
     @Override
     public void onError(Exception e) {
-        interest.readResultedIn(Result.NoTypeStore, new IllegalStateException(e), id, nullState, null);
+        interest.readResultedIn(Failure.of(new StorageException(Result.NoTypeStore, e.getMessage(), e)), id, nullState, null);
     }
 
     @Override
     public void onSuccess(GetItemRequest request, GetItemResult getItemResult) {
         Map<String, AttributeValue> item = getItemResult.getItem();
         if (item == null) {
-            interest.readResultedIn(Result.NotFound, id, nullState, null);
+            interest.readResultedIn(Failure.of(new StorageException(Result.NotFound, "Iteam not found for: " + id)), id, nullState, null);
             return;
         }
 
         try {
             State<T> state = unmarshaller.apply(item);
-            interest.readResultedIn(Result.Success, id, state, object);
+            interest.readResultedIn(Success.of(Result.Success), id, state, object);
         } catch (Exception e) {
-            interest.readResultedIn(Result.Failure, e, id, nullState, object);
+            interest.readResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, nullState, object);
         }
     }
 }
