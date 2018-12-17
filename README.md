@@ -25,13 +25,13 @@ We welcome you to add support for your favorite database!
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-symbio</artifactId>
-      <version>0.7.4</version>
+      <version>0.7.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-symbio-dynamodb</artifactId>
-      <version>0.7.4</version>
+      <version>0.7.5</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -39,8 +39,8 @@ We welcome you to add support for your favorite database!
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-symbio:0.7.4'
-    compile 'io.vlingo:vlingo-symbio-dynamodb:0.7.4'
+    compile 'io.vlingo:vlingo-symbio:0.7.5'
+    compile 'io.vlingo:vlingo-symbio-dynamodb:0.7.5'
 }
 
 repositories {
