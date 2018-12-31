@@ -1,3 +1,10 @@
+// Copyright © 2012-2018 Vaughn Vernon. All rights reserved.
+//
+// This Source Code Form is subject to the terms of the
+// Mozilla Public License, v. 2.0. If a copy of the MPL
+// was not distributed with this file, You can obtain
+// one at https://mozilla.org/MPL/2.0/.
+
 package io.vlingo.symbio.store.state.dynamodb;
 
 import static org.mockito.Mockito.timeout;
@@ -12,6 +19,7 @@ import io.vlingo.actors.Protocols;
 import io.vlingo.actors.World;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
+import io.vlingo.symbio.State.TextState;
 import io.vlingo.symbio.store.state.Entity1;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.TextStateStore;
@@ -19,7 +27,7 @@ import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextStateStore, String> {
+public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextStateStore, TextState> {
     @Override
     protected Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
         return world.actorFor(
@@ -29,22 +37,22 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     }
 
     @Override
-    protected void doWrite(TextStateStore actor, State<String> state, StateStore.WriteResultInterest<String> interest) {
+    protected void doWrite(TextStateStore actor, TextState state, StateStore.WriteResultInterest<TextState> interest) {
         actor.write(state, interest);
     }
 
     @Override
-    protected void doRead(TextStateStore actor, String id, Class<?> type, StateStore.ReadResultInterest<String> interest) {
+    protected void doRead(TextStateStore actor, String id, Class<?> type, StateStore.ReadResultInterest<TextState> interest) {
         actor.read(id, type, interest);
     }
 
     @Override
-    protected State<String> nullState() {
-        return State.NullState.Text;
+    protected TextState nullState() {
+        return TextState.Null;
     }
 
     @Override
-    protected State<String> randomState() {
+    protected TextState randomState() {
         return new State.TextState(
                 UUID.randomUUID().toString(),
                 Entity1.class,
@@ -56,7 +64,7 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     }
 
     @Override
-    protected State<String> newFor(State<String> oldState) {
+    protected TextState newFor(TextState oldState) {
         return new State.TextState(
                 oldState.id,
                 oldState.typed(),
@@ -68,17 +76,17 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     }
 
     @Override
-    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<String> dispatchable) {
+    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<TextState> dispatchable) {
         verify(dispatcher).dispatch(dispatchable.id, dispatchable.state.asTextState());
     }
 
     @Override
-    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, State<String> state) {
+    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, TextState state) {
         verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(id, state.asTextState());
     }
 
     @Override
-    protected RecordAdapter<String> recordAdapter() {
+    protected RecordAdapter<TextState> recordAdapter() {
         return new TextStateRecordAdapter();
     }
 }
