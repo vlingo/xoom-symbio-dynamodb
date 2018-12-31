@@ -13,14 +13,14 @@ import io.vlingo.symbio.store.state.StateStore;
 
 import java.util.Map;
 
-public interface RecordAdapter<T> {
-    Map<String, AttributeValue> marshallState(State<T> state);
+public interface RecordAdapter<RS extends State<?>> {
+    Map<String, AttributeValue> marshallState(RS state);
 
-    Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<T> dispatchable);
+    Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<RS> dispatchable);
 
     Map<String, AttributeValue> marshallForQuery(String id);
 
-    State<T> unmarshallState(Map<String, AttributeValue> record);
+    RS unmarshallState(Map<String, AttributeValue> record);
 
-    StateStore.Dispatchable<T> unmarshallDispatchable(Map<String, AttributeValue> item);
+    StateStore.Dispatchable<RS> unmarshallDispatchable(Map<String, AttributeValue> item);
 }

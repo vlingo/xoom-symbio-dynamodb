@@ -36,20 +36,20 @@ import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.DispatcherControl {
+public abstract class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore.DispatcherControl {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     protected final StateStore.Dispatcher dispatcher;
     protected final AmazonDynamoDBAsync dynamodb;
     protected final CreateTableInterest createTableInterest;
-    protected final RecordAdapter<T> recordAdapter;
-    protected final State<T> nullState;
+    protected final RecordAdapter<RS> recordAdapter;
+    protected final RS nullState;
 
     public DynamoDBStateActor(
             StateStore.Dispatcher dispatcher,
             AmazonDynamoDBAsync dynamodb,
             CreateTableInterest createTableInterest,
-            RecordAdapter<T> recordAdapter,
-            State<T> nullState
+            RecordAdapter<RS> recordAdapter,
+            RS nullState
     ) {
         this.dispatcher = dispatcher;
         this.dynamodb = dynamodb;
@@ -73,7 +73,7 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
         dynamodb.scanAsync(new ScanRequest(DISPATCHABLE_TABLE_NAME).withLimit(100), new DispatchAsyncHandler<>(recordAdapter::unmarshallDispatchable, this::doDispatch));
     }
 
-    protected abstract Void doDispatch(StateStore.Dispatchable<T> dispatchable);
+    protected abstract Void doDispatch(StateStore.Dispatchable<RS> dispatchable);
 
     protected final String tableFor(Class<?> type) {
         String tableName = "vlingo_" + type.getCanonicalName().replace(".", "_");
@@ -81,11 +81,11 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
         return tableName;
     }
 
-    protected final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest<T> interest, final Object object) {
-        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<T>(id, interest, object, nullState, recordAdapter::unmarshallState));
+    protected final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest<RS> interest, final Object object) {
+        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<RS>(id, interest, object, nullState, recordAdapter::unmarshallState));
     }
 
-    protected final void doGenericWrite(State<T> state, StateStore.WriteResultInterest<T> interest, final Object object) {
+    protected final void doGenericWrite(RS state, StateStore.WriteResultInterest<RS> interest, final Object object) {
         String tableName = tableFor(state.typed());
         createTableInterest.createEntityTable(dynamodb, tableName);
 
@@ -93,7 +93,7 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
             Map<String, AttributeValue> foundItem = dynamodb.getItem(readRequestFor(state.id, state.typed())).getItem();
             if (foundItem != null) {
                 try {
-                    State<T> savedState = recordAdapter.unmarshallState(foundItem);
+                    RS savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > state.dataVersion) {
                         interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "Concurrent modification of: " + state.id)), state.id, savedState, object);
                         return;
@@ -107,7 +107,7 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
             // in case of error (for now) just try to write the record
         }
 
-        StateStore.Dispatchable<T> dispatchable = new StateStore.Dispatchable<>(state.type + ":" + state.id, state);
+        StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.type + ":" + state.id, state);
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(state, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
@@ -121,7 +121,7 @@ public abstract class DynamoDBStateActor<T> extends Actor implements StateStore.
         return new GetItemRequest(table, stateItem, true);
     }
 
-    protected Map<String, List<WriteRequest>> writeRequestFor(State<T> state, StateStore.Dispatchable<T> dispatchable) {
+    protected Map<String, List<WriteRequest>> writeRequestFor(RS state, StateStore.Dispatchable<RS> dispatchable) {
         Map<String, List<WriteRequest>> requests = new HashMap<>(2);
 
         requests.put(tableFor(state.typed()),

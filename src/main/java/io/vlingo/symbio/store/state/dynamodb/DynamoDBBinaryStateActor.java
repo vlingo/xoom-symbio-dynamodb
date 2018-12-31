@@ -9,40 +9,40 @@ package io.vlingo.symbio.store.state.dynamodb;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
-import io.vlingo.symbio.State;
+import io.vlingo.symbio.State.BinaryState;
 import io.vlingo.symbio.store.state.BinaryStateStore;
 import io.vlingo.symbio.store.state.dynamodb.adapters.BinaryStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public class DynamoDBBinaryStateActor extends DynamoDBStateActor<byte[]> implements BinaryStateStore {
+public class DynamoDBBinaryStateActor extends DynamoDBStateActor<BinaryState> implements BinaryStateStore {
     public DynamoDBBinaryStateActor(Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest createTableInterest) {
-        super(dispatcher, dynamodb, createTableInterest, new BinaryStateRecordAdapter(), State.NullState.Binary);
+        super(dispatcher, dynamodb, createTableInterest, new BinaryStateRecordAdapter(), BinaryState.Null);
 
         createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
     }
 
     @Override
-    public void read(String id, Class<?> type, ReadResultInterest<byte[]> interest) {
+    public void read(String id, Class<?> type, ReadResultInterest<BinaryState> interest) {
         doGenericRead(id, type, interest, null);
     }
 
     @Override
-    public void read(String id, Class<?> type, ReadResultInterest<byte[]> interest, final Object object) {
+    public void read(String id, Class<?> type, ReadResultInterest<BinaryState> interest, final Object object) {
         doGenericRead(id, type, interest, object);
     }
 
     @Override
-    public void write(State<byte[]> state, WriteResultInterest<byte[]> interest) {
+    public void write(BinaryState state, WriteResultInterest<BinaryState> interest) {
         doGenericWrite(state, interest, null);
     }
 
     @Override
-    public void write(State<byte[]> state, WriteResultInterest<byte[]> interest, final Object object) {
+    public void write(BinaryState state, WriteResultInterest<BinaryState> interest, final Object object) {
         doGenericWrite(state, interest, object);
     }
 
     @Override
-    protected Void doDispatch(Dispatchable<byte[]> dispatchable) {
+    protected Void doDispatch(Dispatchable<BinaryState> dispatchable) {
         dispatcher.dispatch(dispatchable.id, dispatchable.state.asBinaryState());
         return null;
     }

@@ -20,16 +20,16 @@ import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
 
-public class BatchWriteItemAsyncHandler<T> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
-    private final State<T> state;
-    private final StateStore.WriteResultInterest<T> interest;
-    private final StateStore.Dispatchable<T> dispatchable;
+public class BatchWriteItemAsyncHandler<RS extends State<?>> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
+    private final RS state;
+    private final StateStore.WriteResultInterest<RS> interest;
+    private final StateStore.Dispatchable<RS> dispatchable;
     //private final StateStore.Dispatcher dispatcher;
-    private final State<T> nullState;
+    private final RS nullState;
     private final Object object;
-    private final Function<StateStore.Dispatchable<T>, Void> dispatchState;
+    private final Function<StateStore.Dispatchable<RS>, Void> dispatchState;
 
-    public BatchWriteItemAsyncHandler(State<T> state, StateStore.WriteResultInterest<T> interest, final Object object, StateStore.Dispatchable<T> dispatchable, StateStore.Dispatcher dispatcher, State<T> nullState, Function<StateStore.Dispatchable<T>, Void> dispatchState) {
+    public BatchWriteItemAsyncHandler(RS state, StateStore.WriteResultInterest<RS> interest, final Object object, StateStore.Dispatchable<RS> dispatchable, StateStore.Dispatcher dispatcher, RS nullState, Function<StateStore.Dispatchable<RS>, Void> dispatchState) {
         this.state = state;
         this.interest = interest;
         this.object = object;

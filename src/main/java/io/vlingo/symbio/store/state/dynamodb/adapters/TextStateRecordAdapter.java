@@ -7,16 +7,18 @@
 
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import io.vlingo.common.serialization.JsonSerialization;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.state.StateStore;
-
 import java.util.HashMap;
 import java.util.Map;
 
-public final class TextStateRecordAdapter implements RecordAdapter<String> {
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+
+import io.vlingo.common.serialization.JsonSerialization;
+import io.vlingo.symbio.Metadata;
+import io.vlingo.symbio.State;
+import io.vlingo.symbio.State.TextState;
+import io.vlingo.symbio.store.state.StateStore;
+
+public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
     private static final String ID_FIELD = "Id";
     private static final String STATE_FIELD = "State";
     private static final String DATA_FIELD = "Data";
@@ -26,7 +28,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<String> {
     private static final String DATA_VERSION_FIELD = "DataVersion";
 
     @Override
-    public Map<String, AttributeValue> marshallState(State<String> state) {
+    public Map<String, AttributeValue> marshallState(TextState state) {
         String metadataAsJson = JsonSerialization.serialized(state.metadata);
 
         Map<String, AttributeValue> stateItem = new HashMap<>();
@@ -41,7 +43,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<String> {
     }
 
     @Override
-    public Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<String> dispatchable) {
+    public Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<TextState> dispatchable) {
         Map<String, AttributeValue> stateItem = new HashMap<>();
         stateItem.put(ID_FIELD, new AttributeValue().withS(dispatchable.id));
         stateItem.put(STATE_FIELD, new AttributeValue().withS(JsonSerialization.serialized(dispatchable.state)));
@@ -58,7 +60,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<String> {
     }
 
     @Override
-    public State<String> unmarshallState(Map<String, AttributeValue> record) {
+    public TextState unmarshallState(Map<String, AttributeValue> record) {
         try {
             return new State.TextState(
                     record.get(ID_FIELD).getS(),
@@ -74,7 +76,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<String> {
     }
 
     @Override
-    public StateStore.Dispatchable<String> unmarshallDispatchable(Map<String, AttributeValue> item) {
+    public StateStore.Dispatchable<TextState> unmarshallDispatchable(Map<String, AttributeValue> item) {
         String id = item.get(ID_FIELD).getS();
         String json = item.get(STATE_FIELD).getS();
 

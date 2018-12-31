@@ -22,14 +22,14 @@ import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
 
-public class GetEntityAsyncHandler<T> implements AsyncHandler<GetItemRequest, GetItemResult> {
+public class GetEntityAsyncHandler<RS extends State<?>> implements AsyncHandler<GetItemRequest, GetItemResult> {
     private final String id;
-    private final StateStore.ReadResultInterest<T> interest;
+    private final StateStore.ReadResultInterest<RS> interest;
     private final Object object;
-    private final State<T> nullState;
-    private final Function<Map<String, AttributeValue>, State<T>> unmarshaller;
+    private final RS nullState;
+    private final Function<Map<String, AttributeValue>, RS> unmarshaller;
 
-    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest<T> interest, final Object object, State<T> nullState, Function<Map<String, AttributeValue>, State<T>> unmarshaller) {
+    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest<RS> interest, final Object object, RS nullState, Function<Map<String, AttributeValue>, RS> unmarshaller) {
         this.id = id;
         this.interest = interest;
         this.object = object;
@@ -51,7 +51,7 @@ public class GetEntityAsyncHandler<T> implements AsyncHandler<GetItemRequest, Ge
         }
 
         try {
-            State<T> state = unmarshaller.apply(item);
+            RS state = unmarshaller.apply(item);
             interest.readResultedIn(Success.of(Result.Success), id, state, object);
         } catch (Exception e) {
             interest.readResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, nullState, object);

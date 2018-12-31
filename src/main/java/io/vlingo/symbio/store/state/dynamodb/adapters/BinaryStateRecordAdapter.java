@@ -7,17 +7,19 @@
 
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import io.vlingo.common.serialization.JsonSerialization;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.state.StateStore;
-
 import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
-public final class BinaryStateRecordAdapter implements RecordAdapter<byte[]> {
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+
+import io.vlingo.common.serialization.JsonSerialization;
+import io.vlingo.symbio.Metadata;
+import io.vlingo.symbio.State;
+import io.vlingo.symbio.State.BinaryState;
+import io.vlingo.symbio.store.state.StateStore;
+
+public final class BinaryStateRecordAdapter implements RecordAdapter<BinaryState> {
     private static final String ID_FIELD = "Id";
     private static final String STATE_FIELD = "State";
     private static final String DATA_FIELD = "Data";
@@ -27,7 +29,7 @@ public final class BinaryStateRecordAdapter implements RecordAdapter<byte[]> {
     private static final String DATA_VERSION_FIELD = "DataVersion";
 
     @Override
-    public Map<String, AttributeValue> marshallState(State<byte[]> state) {
+    public Map<String, AttributeValue> marshallState(BinaryState state) {
         String metadataAsJson = JsonSerialization.serialized(state.metadata);
 
         Map<String, AttributeValue> stateItem = new HashMap<>();
@@ -42,7 +44,7 @@ public final class BinaryStateRecordAdapter implements RecordAdapter<byte[]> {
     }
 
     @Override
-    public Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<byte[]> dispatchable) {
+    public Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<BinaryState> dispatchable) {
         Map<String, AttributeValue> stateItem = new HashMap<>();
         stateItem.put(ID_FIELD, new AttributeValue().withS(dispatchable.id));
         stateItem.put(STATE_FIELD, new AttributeValue().withS(JsonSerialization.serialized(dispatchable.state)));
@@ -59,7 +61,7 @@ public final class BinaryStateRecordAdapter implements RecordAdapter<byte[]> {
     }
 
     @Override
-    public State<byte[]> unmarshallState(Map<String, AttributeValue> record) {
+    public BinaryState unmarshallState(Map<String, AttributeValue> record) {
         try {
             return new State.BinaryState(
                     record.get(ID_FIELD).getS(),
@@ -75,7 +77,7 @@ public final class BinaryStateRecordAdapter implements RecordAdapter<byte[]> {
     }
 
     @Override
-    public StateStore.Dispatchable<byte[]> unmarshallDispatchable(Map<String, AttributeValue> item) {
+    public StateStore.Dispatchable<BinaryState> unmarshallDispatchable(Map<String, AttributeValue> item) {
         String id = item.get(ID_FIELD).getS();
         String json = item.get(STATE_FIELD).getS();
 
