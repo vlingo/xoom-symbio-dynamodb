@@ -20,33 +20,35 @@ import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
 
-public class BatchWriteItemAsyncHandler<RS extends State<?>> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
-    private final RS state;
-    private final StateStore.WriteResultInterest<RS> interest;
+public class BatchWriteItemAsyncHandler<S,RS extends State<?>> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
+    private final String id;
+    private final S state;
+    private final int stateVersion;
+    private final StateStore.WriteResultInterest interest;
     private final StateStore.Dispatchable<RS> dispatchable;
     //private final StateStore.Dispatcher dispatcher;
-    private final RS nullState;
     private final Object object;
     private final Function<StateStore.Dispatchable<RS>, Void> dispatchState;
 
-    public BatchWriteItemAsyncHandler(RS state, StateStore.WriteResultInterest<RS> interest, final Object object, StateStore.Dispatchable<RS> dispatchable, StateStore.Dispatcher dispatcher, RS nullState, Function<StateStore.Dispatchable<RS>, Void> dispatchState) {
+    public BatchWriteItemAsyncHandler(String id, S state, int stateVersion, StateStore.WriteResultInterest interest, final Object object, StateStore.Dispatchable<RS> dispatchable, StateStore.Dispatcher dispatcher, Function<StateStore.Dispatchable<RS>, Void> dispatchState) {
+        this.id = id;
         this.state = state;
+        this.stateVersion = stateVersion;
         this.interest = interest;
         this.object = object;
         this.dispatchable = dispatchable;
         //this.dispatcher = dispatcher;
-        this.nullState = nullState;
         this.dispatchState = dispatchState;
     }
 
     @Override
     public void onError(Exception e) {
-        interest.writeResultedIn(Failure.of(new StorageException(Result.NoTypeStore, e.getMessage(), e)), state.id, nullState, object);
+        interest.writeResultedIn(Failure.of(new StorageException(Result.NoTypeStore, e.getMessage(), e)), id, state, stateVersion, object);
     }
 
     @Override
     public void onSuccess(BatchWriteItemRequest request, BatchWriteItemResult batchWriteItemResult) {
-        interest.writeResultedIn(Success.of(Result.Success), state.id, state, object);
+        interest.writeResultedIn(Success.of(Result.Success), id, state, stateVersion, object);
         dispatchState.apply(dispatchable);
         // TODO: Must know binary/text type to dispatch, but this is generic class
         //dispatcher.dispatch(state.id, state);
