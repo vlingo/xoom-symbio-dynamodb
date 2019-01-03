@@ -16,6 +16,7 @@ import static org.mockito.Mockito.verify;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.UUID;
 
 import org.junit.After;
@@ -51,11 +52,12 @@ import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.Entity1;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends State<?>> {
+public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected static final int DEFAULT_TIMEOUT = 6000;
     private static final String DYNAMODB_HOST = "http://localhost:8000";
     private static final String DYNAMODB_REGION = "eu-west-1";
@@ -68,12 +70,15 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
     private World world;
     private AmazonDynamoDBAsync dynamodb;
     private CreateTableInterest createTableInterest;
-    private T stateStore;
     private StateStore.DispatcherControl dispatcherControl;
-    private StateStore.WriteResultInterest<RS> writeResultInterest;
-    private StateStore.ReadResultInterest<RS> readResultInterest;
+    private StateStore.WriteResultInterest writeResultInterest;
+    private StateStore.ReadResultInterest readResultInterest;
     private StateStore.Dispatcher dispatcher;
     private StateStore.ConfirmDispatchedResultInterest confirmDispatchedResultInterest;
+    private Random random = new Random();
+
+    protected StateStoreAdapterAssistant adapterAssistant = new StateStoreAdapterAssistant();
+    protected StateStore stateStore;
 
     @BeforeClass
     public static void setUpDynamoDB() throws Exception {
@@ -90,17 +95,23 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
         StateTypeStateStoreMap.reset();
     }
 
+    protected <S> void doWrite(StateStore store, String id, S state, int stateVersion, StateStore.WriteResultInterest interest) {
+      store.write(id, state, stateVersion, interest);
+    }
+
+    protected void doRead(StateStore store, String id, Class<?> type, StateStore.ReadResultInterest interest) {
+      store.read(id, type, interest);
+    }
+
+    protected Entity1 randomState() {
+      return new Entity1(UUID.randomUUID().toString(), random.nextInt(5_000_000));
+    }
+
+    protected Entity1 newFor(Entity1 oldState) {
+      return new Entity1(oldState.id, oldState.value, oldState.stateVersion + 1);
+    }
+
     protected abstract Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest);
-
-    protected abstract void doWrite(T actor, RS state, StateStore.WriteResultInterest<RS> interest);
-
-    protected abstract void doRead(T actor, String id, Class<?> type, StateStore.ReadResultInterest<RS> interest);
-
-    protected abstract RS nullState();
-
-    protected abstract RS randomState();
-
-    protected abstract RS newFor(RS oldState);
 
     protected abstract void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<RS> dispatchable);
 
@@ -109,7 +120,6 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
     protected abstract RecordAdapter<RS> recordAdapter();
 
     @Before
-    @SuppressWarnings("unchecked")
     public void setUp() {
         createTable(TABLE_NAME);
         createTable(DISPATCHABLE_TABLE_NAME);
@@ -147,45 +157,49 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
 
     @Test
     public void testThatWritingAndReadingTransactionReturnsCurrentState() {
-        RS currentState = randomState();
-        doWrite(stateStore, currentState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, null);
+        Entity1 currentState = randomState();
+        doWrite(stateStore, currentState.id, currentState, 1, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
 
-        doRead(stateStore, currentState.id, currentState.typed(), readResultInterest);
-        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(Success.of(Result.Success), currentState.id, currentState, null);
+        doRead(stateStore, currentState.id, Entity1.class, readResultInterest);
+        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, Entity1.StdMetadata, null);
     }
 
     @Test
     public void testThatWritingToATableCallsCreateTableInterest() {
         dropTable(TABLE_NAME);
 
-        doWrite(stateStore, randomState(), writeResultInterest);
+        Entity1 currentState = randomState();
+        doWrite(stateStore, currentState.id, currentState, 1, writeResultInterest);
         verify(createTableInterest, timeout(DEFAULT_TIMEOUT)).createEntityTable(dynamodb, TABLE_NAME);
     }
 
     @Test
     public void testThatWritingToATableThatDoesntExistFails() {
         dropTable(TABLE_NAME);
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doWrite(stateStore, state, writeResultInterest);
+        doWrite(stateStore, currentState.id, currentState, 1, writeResultInterest);
         verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(
                 eq(Failure.of(new StorageException(Result.NoTypeStore, ""))),
-                eq(state.id),
-                eq(nullState()),
+                eq(currentState.id),
+                eq(currentState),
+                eq(1),
                 eq(null)
         );
     }
 
     @Test
     public void testThatReadingAnUnknownStateFailsWithNotFound() {
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doRead(stateStore, state.id, Entity1.class, readResultInterest);
+        doRead(stateStore, currentState.id, Entity1.class, readResultInterest);
         verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(
                 Failure.of(new StorageException(Result.NotFound, "")),
-                state.id,
-                nullState(),
+                currentState.id,
+                null,
+                -1,
+                null,
                 null
         );
     }
@@ -193,59 +207,64 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
     @Test
     public void testThatReadingOnAnUnknownTableFails() {
         dropTable(TABLE_NAME);
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doRead(stateStore, state.id, Entity1.class, readResultInterest);
+        doRead(stateStore, currentState.id, Entity1.class, readResultInterest);
         verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(
                 eq(Failure.of(new StorageException(Result.NoTypeStore, ""))),
-                eq(state.id),
-                eq(nullState()),
+                eq(currentState.id),
+                eq(null),
+                eq(-1),
+                eq(null),
                 eq(null)
         );
     }
 
     @Test
     public void testThatShouldNotAcceptWritingAnOldDataVersion() {
-        RS oldState = randomState();
-        RS newState = newFor(oldState);
+        Entity1 currentState = randomState();
+        Entity1 newState = newFor(currentState);
 
-        doWrite(stateStore, newState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), newState.id, newState, null);
+        doWrite(stateStore, newState.id, newState, newState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), newState.id, newState, newState.stateVersion, null);
 
-        doWrite(stateStore, oldState, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "")), newState.id, newState, null);
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "")), currentState.id, currentState, currentState.stateVersion, null);
     }
 
     @Test
     public void testThatDispatchesOnWrite() {
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), state.id, state, null);
+        doWrite(stateStore, currentState.id, currentState, 1, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
 
-        verifyDispatched(dispatcher, state.type + ":" + state.id, state);
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        verifyDispatched(dispatcher, currentState.getClass().getName() + ":" + currentState.id, raw);
 //        verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(state.type + ":" + state.id, state.asTextState());
     }
 
     @Test
     public void testThatWritingStoresTheDispatchableOnDynamoDB() {
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), state.id, state, null);
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
 
-        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(state);
-        Assert.assertEquals(state, dispatchable.state);
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
+        Assert.assertEquals(raw, dispatchable.state);
     }
 
     @Test
     public void testThatDispatchUnconfirmedShouldDispatchAllOnDynamoDB() {
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), state.id, state, null);
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
 
-        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(state);
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
 
         dispatcherControl.dispatchUnconfirmed();
         verifyDispatched(dispatcher, dispatchable.id, dispatchable);
@@ -254,18 +273,19 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
 
     @Test
     public void testThatConfirmDispatchRemovesRecordFromDynamoDB() {
-        RS state = randomState();
+        Entity1 currentState = randomState();
 
-        doWrite(stateStore, state, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), state.id, state, null);
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
 
-        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(state);
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
         dispatcherControl.confirmDispatched(dispatchable.id, confirmDispatchedResultInterest);
 
         verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
                 .confirmDispatchedResultedIn(Result.Success, dispatchable.id);
 
-        assertNull(dispatchableByState(state));
+        assertNull(dispatchableByState(raw));
     }
 
     @Test
@@ -310,6 +330,7 @@ public abstract class DynamoDBStateActorTest<T extends StateStore, RS extends St
 
     private StateStore.Dispatchable<RS> dispatchableByState(RS state) {
         String dispatchableId = state.type + ":" + state.id;
+
         GetItemResult item = dynamoDBSyncClient().getItem(DISPATCHABLE_TABLE_NAME, recordAdapter().marshallForQuery(dispatchableId));
 
         Map<String, AttributeValue> dispatchableSerializedItem = item.getItem();
