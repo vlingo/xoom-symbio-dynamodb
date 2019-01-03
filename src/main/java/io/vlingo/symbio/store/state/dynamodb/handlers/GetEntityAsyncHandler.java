@@ -21,40 +21,42 @@ import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 
-public class GetEntityAsyncHandler<RS extends State<?>> implements AsyncHandler<GetItemRequest, GetItemResult> {
+public class GetEntityAsyncHandler<S, RS extends State<?>> implements AsyncHandler<GetItemRequest, GetItemResult> {
+    private final StateStoreAdapterAssistant adapterAssistant;
     private final String id;
-    private final StateStore.ReadResultInterest<RS> interest;
+    private final StateStore.ReadResultInterest interest;
     private final Object object;
-    private final RS nullState;
     private final Function<Map<String, AttributeValue>, RS> unmarshaller;
 
-    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest<RS> interest, final Object object, RS nullState, Function<Map<String, AttributeValue>, RS> unmarshaller) {
+    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest interest, final Object object, Function<Map<String, AttributeValue>, RS> unmarshaller, final StateStoreAdapterAssistant adapterAssistant) {
         this.id = id;
         this.interest = interest;
         this.object = object;
-        this.nullState = nullState;
         this.unmarshaller = unmarshaller;
+        this.adapterAssistant = adapterAssistant;
     }
 
     @Override
     public void onError(Exception e) {
-        interest.readResultedIn(Failure.of(new StorageException(Result.NoTypeStore, e.getMessage(), e)), id, nullState, null);
+        interest.readResultedIn(Failure.of(new StorageException(Result.NoTypeStore, e.getMessage(), e)), id, null, -1, null, object);
     }
 
     @Override
     public void onSuccess(GetItemRequest request, GetItemResult getItemResult) {
         Map<String, AttributeValue> item = getItemResult.getItem();
         if (item == null) {
-            interest.readResultedIn(Failure.of(new StorageException(Result.NotFound, "Iteam not found for: " + id)), id, nullState, null);
+            interest.readResultedIn(Failure.of(new StorageException(Result.NotFound, "Iteam not found for: " + id)), id, null, -1, null, object);
             return;
         }
 
         try {
-            RS state = unmarshaller.apply(item);
-            interest.readResultedIn(Success.of(Result.Success), id, state, object);
+            RS raw = unmarshaller.apply(item);
+            S state = adapterAssistant.adaptFromRawState(raw);
+            interest.readResultedIn(Success.of(Result.Success), id, state, raw.dataVersion, raw.metadata, object);
         } catch (Exception e) {
-            interest.readResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, nullState, object);
+            interest.readResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, null, -1, null, object);
         }
     }
 }
