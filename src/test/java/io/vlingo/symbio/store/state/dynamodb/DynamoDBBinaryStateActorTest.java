@@ -10,68 +10,35 @@ package io.vlingo.symbio.store.state.dynamodb;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.util.UUID;
+import org.junit.Before;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.Protocols;
 import io.vlingo.actors.World;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.State;
 import io.vlingo.symbio.State.BinaryState;
-import io.vlingo.symbio.store.state.BinaryStateStore;
 import io.vlingo.symbio.store.state.Entity1;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.state.Entity1.Entity1BinaryStateAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.BinaryStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryStateStore, BinaryState> {
+public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryState> {
+    @Before
+    public void setUp() {
+      super.setUp();
+      final Entity1BinaryStateAdapter adapter = new Entity1BinaryStateAdapter();
+      stateStore.registerAdapter(Entity1.class, adapter);
+      adapterAssistant.registerAdapter(Entity1.class, adapter);
+    }
+
     @Override
     protected Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
         return world.actorFor(
-                Definition.has(DynamoDBBinaryStateActor.class, Definition.parameters(dispatcher, dynamodb, interest)),
-                new Class[]{BinaryStateStore.class, StateStore.DispatcherControl.class}
-        );
-    }
-
-    @Override
-    protected void doWrite(BinaryStateStore actor, BinaryState state, StateStore.WriteResultInterest<BinaryState> interest) {
-        actor.write(state, interest);
-    }
-
-    @Override
-    protected void doRead(BinaryStateStore actor, String id, Class<?> type, StateStore.ReadResultInterest<BinaryState> interest) {
-        actor.read(id, type, interest);
-    }
-
-    @Override
-    protected BinaryState nullState() {
-        return BinaryState.Null;
-    }
-
-    @Override
-    protected BinaryState randomState() {
-        return new State.BinaryState(
-                UUID.randomUUID().toString(),
-                Entity1.class,
-                1,
-                UUID.randomUUID().toString().getBytes(),
-                1,
-                new Metadata(UUID.randomUUID().toString(), UUID.randomUUID().toString())
-        );
-    }
-
-    @Override
-    protected BinaryState newFor(BinaryState oldState) {
-        return new State.BinaryState(
-                oldState.id,
-                oldState.typed(),
-                oldState.typeVersion,
-                oldState.data,
-                oldState.dataVersion + 1,
-                oldState.metadata
+                Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dynamodb, interest, new BinaryStateRecordAdapter())),
+                new Class[]{StateStore.class, StateStore.DispatcherControl.class}
         );
     }
 
