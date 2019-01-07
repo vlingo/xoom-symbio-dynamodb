@@ -37,8 +37,8 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     @Override
     protected Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
         return world.actorFor(
-                Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dynamodb, interest, new TextStateRecordAdapter())),
-                new Class[]{StateStore.class, StateStore.DispatcherControl.class}
+                new Class[]{StateStore.class, StateStore.DispatcherControl.class},
+                Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dynamodb, interest, new TextStateRecordAdapter()))
         );
     }
 
