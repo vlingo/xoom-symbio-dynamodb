@@ -9,10 +9,6 @@ package io.vlingo.symbio.store.state.dynamodb;
 
 import static java.util.Collections.singletonList;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
@@ -21,6 +17,11 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import io.vlingo.actors.Actor;
 import io.vlingo.common.Failure;
@@ -146,7 +147,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
             // in case of error (for now) just try to write the record
         }
 
-        StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.getClass().getName() + ":" + id, raw);
+        StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw);
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(raw, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
