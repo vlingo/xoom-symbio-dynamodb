@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.vlingo.actors.Actor;
+import io.vlingo.actors.Definition;
 import io.vlingo.common.Failure;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
@@ -44,6 +45,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     private final StateStoreAdapterAssistant adapterAssistant;
     private final StateStore.Dispatcher dispatcher;
+    private final StateStore.DispatcherControl dispatcherControl;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
     private final RecordAdapter<RS> recordAdapter;
@@ -61,6 +63,14 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         this.adapterAssistant = new StateStoreAdapterAssistant();
 
         createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
+        
+        this.dispatcherControl = stage().actorFor(
+          DispatcherControl.class,
+          Definition.has(
+            DynamoDBDispatcherControlActor.class,
+            Definition.parameters(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
+        
+        dispatcher.controlWith(dispatcherControl);
     }
 
     @Override

@@ -10,17 +10,17 @@ package io.vlingo.symbio.store.state.dynamodb;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import org.junit.Before;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
+import org.junit.Before;
+
 import io.vlingo.actors.Definition;
-import io.vlingo.actors.Protocols;
 import io.vlingo.actors.World;
 import io.vlingo.symbio.State.BinaryState;
 import io.vlingo.symbio.store.state.Entity1;
-import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.Entity1.Entity1BinaryStateAdapter;
+import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.state.StateStore.Dispatcher;
 import io.vlingo.symbio.store.state.dynamodb.adapters.BinaryStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
@@ -35,11 +35,11 @@ public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryS
     }
 
     @Override
-    protected Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
-        return world.actorFor(
-                new Class[]{StateStore.class, StateStore.DispatcherControl.class},
-                Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dynamodb, interest, new BinaryStateRecordAdapter()))
-        );
+    protected StateStore stateStoreProtocol(World world, Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
+      return world.actorFor(
+        StateStore.class,
+        Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dynamodb, interest, new BinaryStateRecordAdapter()))
+      );
     }
 
     @Override
