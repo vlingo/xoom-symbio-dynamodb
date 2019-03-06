@@ -12,10 +12,8 @@ import static java.util.Collections.singletonList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
-import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
 import java.time.LocalDateTime;
@@ -36,12 +34,10 @@ import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore, StateStore.DispatcherControl {
+public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     private final StateStoreAdapterAssistant adapterAssistant;
     private final StateStore.Dispatcher dispatcher;
@@ -71,21 +67,6 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
             Definition.parameters(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
         
         dispatcher.controlWith(dispatcherControl);
-    }
-
-    @Override
-    public void confirmDispatched(String dispatchId, StateStore.ConfirmDispatchedResultInterest interest) {
-        dynamodb.deleteItemAsync(
-                new DeleteItemRequest(
-                        DISPATCHABLE_TABLE_NAME,
-                        recordAdapter.marshallForQuery(dispatchId)),
-                new ConfirmDispatchableAsyncHandler(dispatchId, interest)
-        );
-    }
-
-    @Override
-    public void dispatchUnconfirmed() {
-        dynamodb.scanAsync(new ScanRequest(DISPATCHABLE_TABLE_NAME).withLimit(100), new DispatchAsyncHandler<>(recordAdapter::unmarshallDispatchable, this::doDispatch));
     }
 
     @Override
