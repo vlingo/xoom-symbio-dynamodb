@@ -13,19 +13,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -43,7 +30,19 @@ import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 
-import io.vlingo.actors.Protocols;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import io.vlingo.actors.World;
 import io.vlingo.common.Failure;
 import io.vlingo.common.Success;
@@ -67,16 +66,16 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     private static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     private static DynamoDBProxyServer dynamodbServer;
 
-    private World world;
-    private AmazonDynamoDBAsync dynamodb;
-    private CreateTableInterest createTableInterest;
-    private StateStore.DispatcherControl dispatcherControl;
     private StateStore.WriteResultInterest writeResultInterest;
     private StateStore.ReadResultInterest readResultInterest;
-    private StateStore.Dispatcher dispatcher;
     private StateStore.ConfirmDispatchedResultInterest confirmDispatchedResultInterest;
     private Random random = new Random();
 
+    protected World world;
+    protected StateStore.Dispatcher dispatcher;
+    protected AmazonDynamoDBAsync dynamodb;
+    protected CreateTableInterest createTableInterest;
+    protected StateStore.DispatcherControl dispatcherControl;
     protected StateStoreAdapterAssistant adapterAssistant = new StateStoreAdapterAssistant();
     protected StateStore stateStore;
 
@@ -111,7 +110,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
       return new Entity1(oldState.id, oldState.value, oldState.stateVersion + 1);
     }
 
-    protected abstract Protocols stateStoreProtocols(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest);
+    protected abstract StateStore stateStoreProtocol(final World world, final StateStore.Dispatcher dispatcher, final StateStore.DispatcherControl dispatcherControl, final AmazonDynamoDBAsync dynamodb, final CreateTableInterest interest);
 
     protected abstract void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<RS> dispatchable);
 
@@ -137,11 +136,8 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         confirmDispatchedResultInterest = mock(StateStore.ConfirmDispatchedResultInterest.class);
 
         dispatcher = mock(StateStore.Dispatcher.class);
-
-        Protocols protocols = stateStoreProtocols(world, dispatcher, dynamodb, createTableInterest);
-
-        stateStore = protocols.get(0);
-        dispatcherControl = protocols.get(1);
+        
+        //store is created by setup() in subclasses
     }
 
     @After
@@ -298,7 +294,6 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
                 .confirmDispatchedResultedIn(Result.Failure, dispatchableId);
     }
-
 
     private void createTable(String tableName) {
         AmazonDynamoDB syncDynamoDb = dynamoDBSyncClient();

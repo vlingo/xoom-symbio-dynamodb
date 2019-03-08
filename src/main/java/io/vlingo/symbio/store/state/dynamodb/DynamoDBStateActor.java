@@ -12,10 +12,8 @@ import static java.util.Collections.singletonList;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
-import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
-import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
 import java.time.LocalDateTime;
@@ -24,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import io.vlingo.actors.Actor;
+import io.vlingo.actors.Definition;
 import io.vlingo.common.Failure;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
@@ -35,25 +34,60 @@ import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
-public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore, StateStore.DispatcherControl {
+public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     private final StateStoreAdapterAssistant adapterAssistant;
     private final StateStore.Dispatcher dispatcher;
+    private final StateStore.DispatcherControl dispatcherControl;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
     private final RecordAdapter<RS> recordAdapter;
 
+    /**
+     * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
+     * 
+     * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
+     * @param dispatcherControl the {@link StateStore.DispatcherControl} this will handle resipatching and dispatch confirmation
+     * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
+     * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
+     * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
+     */
     public DynamoDBStateActor(
-            StateStore.Dispatcher dispatcher,
-            AmazonDynamoDBAsync dynamodb,
-            CreateTableInterest createTableInterest,
-            RecordAdapter<RS> recordAdapter
-    ) {
+      StateStore.Dispatcher dispatcher,
+      StateStore.DispatcherControl dispatcherControl,
+      AmazonDynamoDBAsync dynamodb,
+      CreateTableInterest createTableInterest,
+      RecordAdapter<RS> recordAdapter)
+    {
+      this.dispatcher = dispatcher;
+      this.dynamodb = dynamodb;
+      this.createTableInterest = createTableInterest;
+      this.recordAdapter = recordAdapter;
+      this.adapterAssistant = new StateStoreAdapterAssistant();
+      this.dispatcherControl = dispatcherControl;
+
+      createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
+      
+      dispatcher.controlWith(dispatcherControl);
+    }
+    
+    /**
+     * Constructs a {@link DynamoDBStateActor} with the arguments.
+     * 
+     * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
+     * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
+     * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
+     * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
+     */
+    public DynamoDBStateActor(
+      StateStore.Dispatcher dispatcher,
+      AmazonDynamoDBAsync dynamodb,
+      CreateTableInterest createTableInterest,
+      RecordAdapter<RS> recordAdapter)
+    {
         this.dispatcher = dispatcher;
         this.dynamodb = dynamodb;
         this.createTableInterest = createTableInterest;
@@ -61,21 +95,14 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         this.adapterAssistant = new StateStoreAdapterAssistant();
 
         createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
-    }
-
-    @Override
-    public void confirmDispatched(String dispatchId, StateStore.ConfirmDispatchedResultInterest interest) {
-        dynamodb.deleteItemAsync(
-                new DeleteItemRequest(
-                        DISPATCHABLE_TABLE_NAME,
-                        recordAdapter.marshallForQuery(dispatchId)),
-                new ConfirmDispatchableAsyncHandler(dispatchId, interest)
-        );
-    }
-
-    @Override
-    public void dispatchUnconfirmed() {
-        dynamodb.scanAsync(new ScanRequest(DISPATCHABLE_TABLE_NAME).withLimit(100), new DispatchAsyncHandler<>(recordAdapter::unmarshallDispatchable, this::doDispatch));
+        
+        this.dispatcherControl = stage().actorFor(
+          DispatcherControl.class,
+          Definition.has(
+            DynamoDBDispatcherControlActor.class,
+            Definition.parameters(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
+        
+        dispatcher.controlWith(dispatcherControl);
     }
 
     @Override
