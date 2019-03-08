@@ -66,16 +66,16 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     private static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
     private static DynamoDBProxyServer dynamodbServer;
 
-    private World world;
-    private AmazonDynamoDBAsync dynamodb;
-    private CreateTableInterest createTableInterest;
-//    private StateStore.DispatcherControl dispatcherControl;
     private StateStore.WriteResultInterest writeResultInterest;
     private StateStore.ReadResultInterest readResultInterest;
-    private StateStore.Dispatcher dispatcher;
     private StateStore.ConfirmDispatchedResultInterest confirmDispatchedResultInterest;
     private Random random = new Random();
 
+    protected World world;
+    protected StateStore.Dispatcher dispatcher;
+    protected AmazonDynamoDBAsync dynamodb;
+    protected CreateTableInterest createTableInterest;
+    protected StateStore.DispatcherControl dispatcherControl;
     protected StateStoreAdapterAssistant adapterAssistant = new StateStoreAdapterAssistant();
     protected StateStore stateStore;
 
@@ -110,7 +110,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
       return new Entity1(oldState.id, oldState.value, oldState.stateVersion + 1);
     }
 
-    protected abstract StateStore stateStoreProtocol(World world, StateStore.Dispatcher dispatcher, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest);
+    protected abstract StateStore stateStoreProtocol(final World world, final StateStore.Dispatcher dispatcher, final StateStore.DispatcherControl dispatcherControl, final AmazonDynamoDBAsync dynamodb, final CreateTableInterest interest);
 
     protected abstract void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<RS> dispatchable);
 
@@ -136,8 +136,8 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         confirmDispatchedResultInterest = mock(StateStore.ConfirmDispatchedResultInterest.class);
 
         dispatcher = mock(StateStore.Dispatcher.class);
-
-        stateStore = stateStoreProtocol(world, dispatcher, dynamodb, createTableInterest);
+        
+        //store is created by setup() in subclasses
     }
 
     @After
@@ -252,49 +252,48 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         Assert.assertEquals(raw, dispatchable.state);
     }
 
-//    @Test
-//    public void testThatDispatchUnconfirmedShouldDispatchAllOnDynamoDB() {
-//        Entity1 currentState = randomState();
-//
-//        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
-//        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
-//
-//        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
-//        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
-//
-//        dispatcherControl.dispatchUnconfirmed();
-//        verifyDispatched(dispatcher, dispatchable.id, dispatchable);
-////        verify(dispatcher).dispatch(dispatchable.id, stateFromDispatchable(dispatchable));
-//    }
-//
-//    @Test
-//    public void testThatConfirmDispatchRemovesRecordFromDynamoDB() {
-//        Entity1 currentState = randomState();
-//
-//        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
-//        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
-//
-//        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
-//        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
-//        dispatcherControl.confirmDispatched(dispatchable.id, confirmDispatchedResultInterest);
-//
-//        verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
-//                .confirmDispatchedResultedIn(Result.Success, dispatchable.id);
-//
-//        assertNull(dispatchableByState(raw));
-//    }
-//
-//    @Test
-//    public void testThatConfirmDispatchFailsWithFailureIfTableDoesNotExist() {
-//        dropTable(DISPATCHABLE_TABLE_NAME);
-//
-//        String dispatchableId = UUID.randomUUID().toString();
-//        dispatcherControl.confirmDispatched(dispatchableId, confirmDispatchedResultInterest);
-//
-//        verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
-//                .confirmDispatchedResultedIn(Result.Failure, dispatchableId);
-//    }
+    @Test
+    public void testThatDispatchUnconfirmedShouldDispatchAllOnDynamoDB() {
+        Entity1 currentState = randomState();
 
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
+
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
+
+        dispatcherControl.dispatchUnconfirmed();
+        verifyDispatched(dispatcher, dispatchable.id, dispatchable);
+//        verify(dispatcher).dispatch(dispatchable.id, stateFromDispatchable(dispatchable));
+    }
+
+    @Test
+    public void testThatConfirmDispatchRemovesRecordFromDynamoDB() {
+        Entity1 currentState = randomState();
+
+        doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, null);
+
+        RS raw = adapterAssistant.adaptToRawState(currentState, currentState.stateVersion);
+        StateStore.Dispatchable<RS> dispatchable = dispatchableByState(raw);
+        dispatcherControl.confirmDispatched(dispatchable.id, confirmDispatchedResultInterest);
+
+        verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
+                .confirmDispatchedResultedIn(Result.Success, dispatchable.id);
+
+        assertNull(dispatchableByState(raw));
+    }
+
+    @Test
+    public void testThatConfirmDispatchFailsWithFailureIfTableDoesNotExist() {
+        dropTable(DISPATCHABLE_TABLE_NAME);
+
+        String dispatchableId = UUID.randomUUID().toString();
+        dispatcherControl.confirmDispatched(dispatchableId, confirmDispatchedResultInterest);
+
+        verify(confirmDispatchedResultInterest, timeout(DEFAULT_TIMEOUT))
+                .confirmDispatchedResultedIn(Result.Failure, dispatchableId);
+    }
 
     private void createTable(String tableName) {
         AmazonDynamoDB syncDynamoDb = dynamoDBSyncClient();
