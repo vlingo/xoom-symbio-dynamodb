@@ -9,6 +9,11 @@ package io.vlingo.symbio.store.state.dynamodb;
 
 import static java.util.Collections.singletonList;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
@@ -16,15 +21,11 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.vlingo.actors.Actor;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Failure;
 import io.vlingo.symbio.Metadata;
+import io.vlingo.symbio.Source;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.StateAdapter;
 import io.vlingo.symbio.store.Result;
@@ -48,7 +49,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
     /**
      * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
-     * 
+     *
      * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
      * @param dispatcherControl the {@link StateStore.DispatcherControl} this will handle resipatching and dispatch confirmation
      * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
@@ -70,13 +71,13 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       this.dispatcherControl = dispatcherControl;
 
       createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
-      
+
       dispatcher.controlWith(dispatcherControl);
     }
-    
+
     /**
      * Constructs a {@link DynamoDBStateActor} with the arguments.
-     * 
+     *
      * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
      * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
      * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
@@ -95,44 +96,25 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         this.adapterAssistant = new StateStoreAdapterAssistant();
 
         createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
-        
+
         this.dispatcherControl = stage().actorFor(
           DispatcherControl.class,
           Definition.has(
             DynamoDBDispatcherControlActor.class,
             Definition.parameters(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
-        
+
         dispatcher.controlWith(dispatcherControl);
     }
 
     @Override
-    public void read(final String id, final Class<?> type, final ReadResultInterest interest) {
-      read(id, type, interest, null);
-    }
-
-    @Override
-    public void read(final String id, final Class<?> type, final ReadResultInterest interest, final Object object) {
+    public void read(String id, Class<?> type, ReadResultInterest interest, Object object) {
       doGenericRead(id, type, interest, object);
     }
 
-    @Override
-    public <S> void write(final String id, final S state, final int stateVersion, final Metadata metadata, final WriteResultInterest interest) {
-      write(id, state, stateVersion, metadata, interest, null);
-    }
 
     @Override
-    public <S> void write(final String id, final S state, final int stateVersion, final WriteResultInterest interest) {
-      write(id, state, stateVersion, null, interest, null);
-    }
-
-    @Override
-    public <S> void write(final String id, final S state, final int stateVersion, final WriteResultInterest interest, final Object object) {
-      this.doGenericWrite(id, state, stateVersion, null, interest, object);
-    }
-
-    @Override
-    public <S> void write(final String id, final S state, final int stateVersion, final Metadata metadata, final WriteResultInterest interest, final Object object) {
-      this.doGenericWrite(id, state, stateVersion, metadata, interest, object);
+    public <S> void write(final String id, final S state, final int stateVersion, final List<Source<?>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
+      doGenericWrite(id, state, stateVersion, sources, metadata, interest, object);
     }
 
     @Override
@@ -150,7 +132,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<>(id, interest, object, recordAdapter::unmarshallState, adapterAssistant));
     }
 
-    private final <S> void doGenericWrite(final String id, final S state, final int stateVersion, final Metadata metadata, final WriteResultInterest interest, final Object object) {
+    private final <S> void doGenericWrite(final String id, final S state, final int stateVersion, final List<Source<?>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
         String tableName = tableFor(state.getClass());
         createTableInterest.createEntityTable(dynamodb, tableName);
         final RS raw = metadata == null ?
@@ -173,6 +155,8 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         } catch (Exception e) {
             // in case of error (for now) just try to write the record
         }
+
+        // TODO: Write sources
 
         StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw);
 
