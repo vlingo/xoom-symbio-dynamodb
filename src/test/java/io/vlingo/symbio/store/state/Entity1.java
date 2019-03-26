@@ -68,6 +68,11 @@ public class Entity1 {
     }
 
     @Override
+    public <ST> ST fromRawState(final BinaryState raw, final Class<ST> stateType) {
+      throw new UnsupportedOperationException("Binray conversion not supported.");
+    }
+
+    @Override
     public BinaryState toRawState(final Entity1 state, final int stateVersion) {
       return toRawState(state, stateVersion, Metadata.with("value", "op"));
     }
@@ -90,6 +95,11 @@ public class Entity1 {
     @Override
     public Entity1 fromRawState(final TextState raw) {
       return JsonSerialization.deserialized(raw.data, raw.typed());
+    }
+
+    @Override
+    public <ST> ST fromRawState(final TextState raw, final Class<ST> stateType) {
+      return JsonSerialization.deserialized(raw.data, stateType);
     }
 
     @Override
