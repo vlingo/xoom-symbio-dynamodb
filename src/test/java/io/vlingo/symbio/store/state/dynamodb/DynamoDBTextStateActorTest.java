@@ -10,15 +10,13 @@ package io.vlingo.symbio.store.state.dynamodb;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-
 import org.junit.Before;
+
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.World;
 import io.vlingo.symbio.State.TextState;
-import io.vlingo.symbio.store.state.Entity1;
-import io.vlingo.symbio.store.state.Entity1.Entity1TextStateAdapter;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateStore.Dispatcher;
 import io.vlingo.symbio.store.state.StateStore.DispatcherControl;
@@ -27,9 +25,12 @@ import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState> {
-  
+
+    @Override
     @Before
     public void setUp() {
+      isBinaryTest = false;
+
       super.setUp();
 
       /*
@@ -43,12 +44,8 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
         Definition.has(
           DynamoDBDispatcherControlActor.class,
           Definition.parameters(dispatcher, dynamodb, new TextStateRecordAdapter(), 1000L, 1000L)));
-      
+
       stateStore = stateStoreProtocol(world, dispatcher, dispatcherControl, dynamodb, createTableInterest);
-      
-      final Entity1TextStateAdapter adapter = new Entity1TextStateAdapter();
-      stateStore.registerAdapter(Entity1.class, adapter);
-      adapterAssistant.registerAdapter(Entity1.class, adapter);
     }
 
     @Override

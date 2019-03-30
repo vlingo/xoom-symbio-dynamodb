@@ -24,14 +24,14 @@ import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 import io.vlingo.actors.Actor;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Failure;
+import io.vlingo.symbio.EntryAdapterProvider;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.Source;
 import io.vlingo.symbio.State;
-import io.vlingo.symbio.StateAdapter;
+import io.vlingo.symbio.StateAdapterProvider;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
@@ -40,11 +40,12 @@ import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
-    private final StateStoreAdapterAssistant adapterAssistant;
     private final StateStore.Dispatcher dispatcher;
     private final StateStore.DispatcherControl dispatcherControl;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
+    private final EntryAdapterProvider entryAdapterProvider;
+    private final StateAdapterProvider stateAdapterProvider;
     private final RecordAdapter<RS> recordAdapter;
 
     /**
@@ -67,8 +68,9 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       this.dynamodb = dynamodb;
       this.createTableInterest = createTableInterest;
       this.recordAdapter = recordAdapter;
-      this.adapterAssistant = new StateStoreAdapterAssistant();
       this.dispatcherControl = dispatcherControl;
+      this.entryAdapterProvider = EntryAdapterProvider.instance(stage().world());
+      this.stateAdapterProvider = StateAdapterProvider.instance(stage().world());
 
       createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
 
@@ -93,7 +95,8 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         this.dynamodb = dynamodb;
         this.createTableInterest = createTableInterest;
         this.recordAdapter = recordAdapter;
-        this.adapterAssistant = new StateStoreAdapterAssistant();
+        this.entryAdapterProvider = EntryAdapterProvider.instance(stage().world());
+        this.stateAdapterProvider = StateAdapterProvider.instance(stage().world());
 
         createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
 
@@ -113,13 +116,8 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
 
     @Override
-    public <S> void write(final String id, final S state, final int stateVersion, final List<Source<?>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
+    public <S,C> void write(final String id, final S state, final int stateVersion, final List<Source<C>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
       doGenericWrite(id, state, stateVersion, sources, metadata, interest, object);
-    }
-
-    @Override
-    public <S, R extends State<?>> void registerAdapter(Class<S> stateType, StateAdapter<S, R> adapter) {
-      adapterAssistant.registerAdapter(stateType, adapter);
     }
 
     protected final String tableFor(Class<?> type) {
@@ -129,26 +127,27 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     }
 
     private final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest interest, final Object object) {
-        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<>(id, interest, object, recordAdapter::unmarshallState, adapterAssistant));
+        dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<>(id, interest, object, recordAdapter::unmarshallState, stateAdapterProvider));
     }
 
-    private final <S> void doGenericWrite(final String id, final S state, final int stateVersion, final List<Source<?>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
+    private final <S,C> void doGenericWrite(final String id, final S state, final int stateVersion, final List<Source<C>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
         String tableName = tableFor(state.getClass());
         createTableInterest.createEntityTable(dynamodb, tableName);
         final RS raw = metadata == null ?
-                adapterAssistant.adaptToRawState(state, stateVersion) :
-                adapterAssistant.adaptToRawState(state, stateVersion, metadata);
+                stateAdapterProvider.asRaw(id, state, stateVersion) :
+                stateAdapterProvider.asRaw(id, state, stateVersion, metadata);
+
         try {
             Map<String, AttributeValue> foundItem = dynamodb.getItem(readRequestFor(id, state.getClass())).getItem();
             if (foundItem != null) {
                 try {
                     RS savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > raw.dataVersion) {
-                        interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "Concurrent modification of: " + id)), id, state, stateVersion, object);
+                        interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "Concurrent modification of: " + id)), id, state, stateVersion, sources, object);
                         return;
                     }
                 } catch (Exception e) {
-                    interest.writeResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, state, stateVersion, object);
+                    interest.writeResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, state, stateVersion, sources, object);
                     return;
                 }
             }
@@ -157,12 +156,13 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         }
 
         // TODO: Write sources
+        entryAdapterProvider.asEntries(sources); // final List<Entry<?>> entries =
 
         StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw);
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(raw, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
-        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<S,RS>(id, state, stateVersion, interest, object, dispatchable, dispatcher, this::doDispatch));
+        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<S,RS,C>(id, state, stateVersion, sources, interest, object, dispatchable, dispatcher, this::doDispatch));
     }
 
     private GetItemRequest readRequestFor(String id, Class<?> type) {

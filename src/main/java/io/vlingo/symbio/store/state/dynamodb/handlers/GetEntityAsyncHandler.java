@@ -18,24 +18,24 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import io.vlingo.common.Failure;
 import io.vlingo.common.Success;
 import io.vlingo.symbio.State;
+import io.vlingo.symbio.StateAdapterProvider;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStoreAdapterAssistant;
 
 public class GetEntityAsyncHandler<S, RS extends State<?>> implements AsyncHandler<GetItemRequest, GetItemResult> {
-    private final StateStoreAdapterAssistant adapterAssistant;
     private final String id;
     private final StateStore.ReadResultInterest interest;
     private final Object object;
+    final StateAdapterProvider stateAdapterProvider;
     private final Function<Map<String, AttributeValue>, RS> unmarshaller;
 
-    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest interest, final Object object, Function<Map<String, AttributeValue>, RS> unmarshaller, final StateStoreAdapterAssistant adapterAssistant) {
+    public GetEntityAsyncHandler(String id, StateStore.ReadResultInterest interest, final Object object, Function<Map<String, AttributeValue>, RS> unmarshaller, final StateAdapterProvider stateAdapterProvider) {
         this.id = id;
         this.interest = interest;
         this.object = object;
         this.unmarshaller = unmarshaller;
-        this.adapterAssistant = adapterAssistant;
+        this.stateAdapterProvider = stateAdapterProvider;
     }
 
     @Override
@@ -53,7 +53,7 @@ public class GetEntityAsyncHandler<S, RS extends State<?>> implements AsyncHandl
 
         try {
             RS raw = unmarshaller.apply(item);
-            S state = adapterAssistant.adaptFromRawState(raw);
+            S state = stateAdapterProvider.fromRaw(raw);
             interest.readResultedIn(Success.of(Result.Success), id, state, raw.dataVersion, raw.metadata, object);
         } catch (Exception e) {
             interest.readResultedIn(Failure.of(new StorageException(Result.Failure, e.getMessage(), e)), id, null, -1, null, object);

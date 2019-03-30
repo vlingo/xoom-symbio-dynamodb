@@ -7,11 +7,11 @@
 
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 
 import io.vlingo.common.serialization.JsonSerialization;
 import io.vlingo.symbio.Metadata;

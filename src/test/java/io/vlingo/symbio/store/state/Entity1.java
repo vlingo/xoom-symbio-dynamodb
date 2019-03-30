@@ -17,7 +17,7 @@ import io.vlingo.symbio.State.TextState;
 import io.vlingo.symbio.StateAdapter;
 
 public class Entity1 {
-  public static final Metadata StdMetadata = Metadata.with("value", "op");
+  public static final Metadata StdMetadata = Metadata.with("", "");
 
   public final String id;
   public final int value;
@@ -74,11 +74,11 @@ public class Entity1 {
 
     @Override
     public BinaryState toRawState(final Entity1 state, final int stateVersion) {
-      return toRawState(state, stateVersion, Metadata.with("value", "op"));
+      return toRawState(state.id, state, stateVersion, StdMetadata);
     }
 
     @Override
-    public BinaryState toRawState(final Entity1 state, final int stateVersion, final Metadata metadata) {
+    public BinaryState toRawState(final String id, final Entity1 state, final int stateVersion, final Metadata metadata) {
       final String serialization = JsonSerialization.serialized(state);
       final byte[] bytes = serialization.getBytes(CHARSET_VALUE);
       return new BinaryState(state.id, Entity1.class, typeVersion(), bytes, stateVersion, metadata);
@@ -109,8 +109,13 @@ public class Entity1 {
 
     @Override
     public TextState toRawState(final Entity1 state, final int stateVersion, final Metadata metadata) {
+      return toRawState(state.id, state, stateVersion, metadata);
+    }
+
+    @Override
+    public TextState toRawState(final String id, final Entity1 state, final int stateVersion, final Metadata metadata) {
       final String serialization = JsonSerialization.serialized(state);
-      return new TextState(state.id, Entity1.class, typeVersion(), serialization, stateVersion, metadata);
+      return new TextState(id, Entity1.class, typeVersion(), serialization, stateVersion, metadata);
     }
   }
 }

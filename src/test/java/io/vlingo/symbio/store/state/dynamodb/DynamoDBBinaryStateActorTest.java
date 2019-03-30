@@ -10,13 +10,14 @@ package io.vlingo.symbio.store.state.dynamodb;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 
-import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-
 import org.junit.Before;
+
+import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.World;
 import io.vlingo.symbio.State.BinaryState;
+import io.vlingo.symbio.StateAdapterProvider;
 import io.vlingo.symbio.store.state.Entity1;
 import io.vlingo.symbio.store.state.Entity1.Entity1BinaryStateAdapter;
 import io.vlingo.symbio.store.state.StateStore;
@@ -27,11 +28,17 @@ import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryState> {
-  
+
+    @Override
     @Before
     public void setUp() {
+      isBinaryTest = true;
+
       super.setUp();
-      
+
+      final StateAdapterProvider stateAdapterProvider = new StateAdapterProvider(world);
+      stateAdapterProvider.registerAdapter(Entity1.class, new Entity1BinaryStateAdapter());
+
       /*
        * NOTE: dispatcherControl is only created here and passed to stateStoreProtocol
        * so that this test case can directly interact with dispatcherControl. Normally
@@ -43,12 +50,8 @@ public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryS
         Definition.has(
           DynamoDBDispatcherControlActor.class,
           Definition.parameters(dispatcher, dynamodb, new BinaryStateRecordAdapter(), 1000L, 1000L)));
-      
+
       stateStore = stateStoreProtocol(world, dispatcher, dispatcherControl, dynamodb, createTableInterest);
-      
-      final Entity1BinaryStateAdapter adapter = new Entity1BinaryStateAdapter();
-      stateStore.registerAdapter(Entity1.class, adapter);
-      adapterAssistant.registerAdapter(Entity1.class, adapter);
     }
 
     @Override
