@@ -25,6 +25,7 @@ import io.vlingo.actors.Actor;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Failure;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.EntryAdapterProvider;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.Source;
@@ -127,7 +128,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
     @Override
     @SuppressWarnings("unchecked")
-    public <ET> Completes<StateStoreEntryReader<ET>> entryReader(final String name) {
+    public <ET extends Entry<?>> Completes<StateStoreEntryReader<ET>> entryReader(final String name) {
       StateStoreEntryReader<?> reader = entryReaders.get(name);
       if (reader == null) {
         reader = childActorFor(StateStoreEntryReader.class, Definition.has(DynamoDBStateStoreEntryReaderActor.class, Definition.parameters(name)));

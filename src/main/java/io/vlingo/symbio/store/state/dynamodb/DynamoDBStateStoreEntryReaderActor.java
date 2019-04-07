@@ -14,7 +14,7 @@ import io.vlingo.common.Completes;
 import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
 
-public class DynamoDBStateStoreEntryReaderActor<T> extends Actor implements StateStoreEntryReader<T> {
+public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Actor implements StateStoreEntryReader<T> {
   private final String name;
 
   public DynamoDBStateStoreEntryReaderActor(final String name) {
@@ -27,12 +27,14 @@ public class DynamoDBStateStoreEntryReaderActor<T> extends Actor implements Stat
   }
 
   @Override
-  public Completes<Entry<T>> readNext() {
+  public Completes<T> readNext() {
+    // TODO Auto-generated method stub
     return null;
   }
 
   @Override
-  public Completes<List<Entry<T>>> readNext(int maximumEntries) {
+  public Completes<List<T>> readNext(int maximumEntries) {
+    // TODO Auto-generated method stub
     return null;
   }
 
