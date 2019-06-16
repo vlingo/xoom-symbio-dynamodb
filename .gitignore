@@ -5,3 +5,11 @@
 /.classpath
 /.project
 /bin/
+
+# Intellij
+.idea/
+*.iml
+*.iws
+*.ipr
+.gradle/
+out/
