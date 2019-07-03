@@ -7,22 +7,24 @@
 
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-
 import io.vlingo.common.serialization.JsonSerialization;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.State.TextState;
-import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
     private static final String ID_FIELD = "Id";
     private static final String CREATED_AT_FIELD = "CreatedAt";
     private static final String STATE_FIELD = "State";
+    private static final String ENTRIES = "entries";
     private static final String DATA_FIELD = "Data";
     private static final String TYPE_FIELD = "Type";
     private static final String METADATA_FIELD = "Metadata";
@@ -45,12 +47,15 @@ public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
     }
 
     @Override
-    public Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<TextState> dispatchable) {
+    public Map<String, AttributeValue> marshallDispatchable(Dispatchable<Entry<?>, TextState> dispatchable) {
         Map<String, AttributeValue> stateItem = new HashMap<>();
-        stateItem.put(ID_FIELD, new AttributeValue().withS(dispatchable.id));
-        stateItem.put(CREATED_AT_FIELD, new AttributeValue().withS(dispatchable.createdAt.toString()));
-        stateItem.put(STATE_FIELD, new AttributeValue().withS(JsonSerialization.serialized(dispatchable.state)));
-
+        stateItem.put(ID_FIELD, new AttributeValue().withS(dispatchable.id()));
+        stateItem.put(CREATED_AT_FIELD, new AttributeValue().withS(dispatchable.createdOn().toString()));
+        if (dispatchable.state().isPresent()) {
+            stateItem.put(STATE_FIELD, new AttributeValue().withS(JsonSerialization.serialized(dispatchable.state().get())));
+        }
+        //TODO add entities
+        
         return stateItem;
     }
 
@@ -79,11 +84,11 @@ public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
     }
 
     @Override
-    public StateStore.Dispatchable<TextState> unmarshallDispatchable(Map<String, AttributeValue> item) {
+    public Dispatchable<Entry<?>, TextState> unmarshallDispatchable(Map<String, AttributeValue> item) {
         String id = item.get(ID_FIELD).getS();
         LocalDateTime createdAt = LocalDateTime.parse(item.get(CREATED_AT_FIELD).getS());
         String json = item.get(STATE_FIELD).getS();
 
-        return new StateStore.Dispatchable<>(id, createdAt, JsonSerialization.deserialized(json, State.TextState.class));
+        return new Dispatchable<>(id, createdAt, JsonSerialization.deserialized(json, State.TextState.class), Collections.emptyList());
     }
 }

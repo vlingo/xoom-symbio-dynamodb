@@ -7,20 +7,12 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
-import static java.util.Collections.singletonList;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
-
 import io.vlingo.actors.Actor;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Completes;
@@ -33,6 +25,9 @@ import io.vlingo.symbio.State;
 import io.vlingo.symbio.StateAdapterProvider;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.symbio.store.dispatch.Dispatcher;
+import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
@@ -41,10 +36,17 @@ import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
+
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
-    private final StateStore.Dispatcher dispatcher;
-    private final StateStore.DispatcherControl dispatcherControl;
+    private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+    private final DispatcherControl dispatcherControl;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
     private final Map<String,StateStoreEntryReader<?>> entryReaders;
@@ -55,15 +57,15 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     /**
      * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
      *
-     * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
-     * @param dispatcherControl the {@link StateStore.DispatcherControl} this will handle resipatching and dispatch confirmation
+     * @param dispatcher the {@link Dispatcher} that will handle dispatching state changes
+     * @param dispatcherControl the {@link DispatcherControl} this will handle resipatching and dispatch confirmation
      * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
      * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
      * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
      */
     public DynamoDBStateActor(
-      StateStore.Dispatcher dispatcher,
-      StateStore.DispatcherControl dispatcherControl,
+      Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
+      DispatcherControl dispatcherControl,
       AmazonDynamoDBAsync dynamodb,
       CreateTableInterest createTableInterest,
       RecordAdapter<RS> recordAdapter)
@@ -85,13 +87,13 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     /**
      * Constructs a {@link DynamoDBStateActor} with the arguments.
      *
-     * @param dispatcher the {@link StateStore.Dispatcher} that will handle dispatching state changes
+     * @param dispatcher the {@link Dispatcher} that will handle dispatching state changes
      * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
      * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
      * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
      */
     public DynamoDBStateActor(
-      StateStore.Dispatcher dispatcher,
+      Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
       AmazonDynamoDBAsync dynamodb,
       CreateTableInterest createTableInterest,
       RecordAdapter<RS> recordAdapter)
@@ -173,9 +175,9 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         }
 
         // TODO: Write sources
-        entryAdapterProvider.asEntries(sources); // final List<Entry<?>> entries =
+        final List<Entry<?>> entries = entryAdapterProvider.asEntries(sources, metadata);// final List<Entry<?>> entries =
 
-        StateStore.Dispatchable<RS> dispatchable = new StateStore.Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw);
+        Dispatchable<Entry<?>, RS> dispatchable = new Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw, entries);
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(raw, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
@@ -189,7 +191,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         return new GetItemRequest(table, stateItem, true);
     }
 
-    private Map<String, List<WriteRequest>> writeRequestFor(RS raw, StateStore.Dispatchable<RS> dispatchable) {
+    private Map<String, List<WriteRequest>> writeRequestFor(RS raw, Dispatchable<Entry<?>, RS> dispatchable) {
         Map<String, List<WriteRequest>> requests = new HashMap<>(2);
 
         requests.put(tableFor(raw.typed()),
@@ -201,8 +203,8 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         return requests;
     }
 
-    private Void doDispatch(Dispatchable<?> dispatchable) {
-      dispatcher.dispatch(dispatchable.id, dispatchable.state);
+    private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
+      dispatcher.dispatch(dispatchable);
       return null;
     }
 }

@@ -8,19 +8,20 @@
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
 
 import java.util.Map;
 
 public interface RecordAdapter<RS extends State<?>> {
     Map<String, AttributeValue> marshallState(RS state);
 
-    Map<String, AttributeValue> marshallDispatchable(StateStore.Dispatchable<RS> dispatchable);
+    Map<String, AttributeValue> marshallDispatchable(Dispatchable<Entry<?>, RS> dispatchable);
 
     Map<String, AttributeValue> marshallForQuery(String id);
 
     RS unmarshallState(Map<String, AttributeValue> record);
 
-    StateStore.Dispatchable<RS> unmarshallDispatchable(Map<String, AttributeValue> item);
+    Dispatchable<Entry<?>, RS> unmarshallDispatchable(Map<String, AttributeValue> item);
 }

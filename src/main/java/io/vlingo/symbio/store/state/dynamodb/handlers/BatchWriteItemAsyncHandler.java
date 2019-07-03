@@ -7,33 +7,35 @@
 
 package io.vlingo.symbio.store.state.dynamodb.handlers;
 
-import java.util.List;
-import java.util.function.Function;
-
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
-
 import io.vlingo.common.Failure;
 import io.vlingo.common.Success;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.Source;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.symbio.store.dispatch.Dispatcher;
 import io.vlingo.symbio.store.state.StateStore;
+
+import java.util.List;
+import java.util.function.Function;
 
 public class BatchWriteItemAsyncHandler<S,RS extends State<?>,C> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
     private final String id;
     private final S state;
     private final int stateVersion;
     private final StateStore.WriteResultInterest interest;
-    private final StateStore.Dispatchable<RS> dispatchable;
+    private final Dispatchable<Entry<?>, RS> dispatchable;
     //private final StateStore.Dispatcher dispatcher;
     private final Object object;
-    private final Function<StateStore.Dispatchable<RS>, Void> dispatchState;
+    private final Function<Dispatchable<Entry<?>, RS>, Void> dispatchState;
     private final List<Source<C>> sources;
 
-    public BatchWriteItemAsyncHandler(String id, S state, int stateVersion, final List<Source<C>> sources, StateStore.WriteResultInterest interest, final Object object, StateStore.Dispatchable<RS> dispatchable, StateStore.Dispatcher dispatcher, Function<StateStore.Dispatchable<RS>, Void> dispatchState) {
+    public BatchWriteItemAsyncHandler(String id, S state, int stateVersion, final List<Source<C>> sources, StateStore.WriteResultInterest interest, final Object object, Dispatchable<Entry<?>, RS> dispatchable, Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, Function<Dispatchable<Entry<?>, RS>, Void> dispatchState) {
         this.id = id;
         this.state = state;
         this.stateVersion = stateVersion;

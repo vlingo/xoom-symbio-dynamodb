@@ -10,14 +10,14 @@ package io.vlingo.symbio.store.state.dynamodb.handlers;
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemResult;
-import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.Result;
+import io.vlingo.symbio.store.dispatch.ConfirmDispatchedResultInterest;
 
 public class ConfirmDispatchableAsyncHandler implements AsyncHandler<DeleteItemRequest, DeleteItemResult> {
     private final String dispatchId;
-    private final StateStore.ConfirmDispatchedResultInterest interest;
+    private final ConfirmDispatchedResultInterest interest;
 
-    public ConfirmDispatchableAsyncHandler(String dispatchId, StateStore.ConfirmDispatchedResultInterest interest) {
+    public ConfirmDispatchableAsyncHandler(String dispatchId, ConfirmDispatchedResultInterest interest) {
         this.dispatchId = dispatchId;
         this.interest = interest;
     }
