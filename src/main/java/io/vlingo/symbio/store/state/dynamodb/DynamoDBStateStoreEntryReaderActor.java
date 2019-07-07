@@ -22,6 +22,11 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   }
 
   @Override
+  public void close() {
+    // TODO
+  }
+
+  @Override
   public Completes<String> name() {
     return completes().with(name);
   }
