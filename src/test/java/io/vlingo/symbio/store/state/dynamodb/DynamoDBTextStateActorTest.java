@@ -7,22 +7,25 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-
-import org.junit.Before;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.World;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.State.TextState;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.symbio.store.dispatch.Dispatcher;
+import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStore.Dispatcher;
-import io.vlingo.symbio.store.state.StateStore.DispatcherControl;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import org.junit.Before;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
 
 public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState> {
 
@@ -49,7 +52,7 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     }
 
     @Override
-    protected StateStore stateStoreProtocol(World world, Dispatcher dispatcher, DispatcherControl dispatcherControl, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
+    protected StateStore stateStoreProtocol(World world, Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, DispatcherControl dispatcherControl, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
       return world.actorFor(
         StateStore.class,
         Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dispatcherControl, dynamodb, interest, new TextStateRecordAdapter()))
@@ -57,13 +60,13 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     }
 
     @Override
-    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, StateStore.Dispatchable<TextState> dispatchable) {
-        verify(dispatcher).dispatch(dispatchable.id, dispatchable.state.asTextState());
+    protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, String id, Dispatchable<Entry<?>,TextState> dispatchable) {
+      verify(dispatcher).dispatch(dispatchable);
     }
 
     @Override
-    protected void verifyDispatched(StateStore.Dispatcher dispatcher, String id, TextState state) {
-        verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(id, state.asTextState());
+    protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, String id, TextState state) {
+      verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
     }
 
     @Override

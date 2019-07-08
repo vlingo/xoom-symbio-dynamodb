@@ -9,22 +9,21 @@ package io.vlingo.symbio.store.state.dynamodb;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
-
 import io.vlingo.actors.Actor;
 import io.vlingo.common.Cancellable;
 import io.vlingo.common.Scheduled;
+import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStore.ConfirmDispatchedResultInterest;
-import io.vlingo.symbio.store.state.StateStore.Dispatchable;
-import io.vlingo.symbio.store.state.StateStore.Dispatcher;
-import io.vlingo.symbio.store.state.StateStore.DispatcherControl;
+import io.vlingo.symbio.store.dispatch.ConfirmDispatchedResultInterest;
+import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.symbio.store.dispatch.Dispatcher;
+import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
 /**
  * DynamoDBDispatcherControlActor is responsible for ensuring that
  * dispatching of {@link Dispatchable dispatchables} occurs and
@@ -34,8 +33,8 @@ public class DynamoDBDispatcherControlActor<RS extends State<?>>  extends Actor
 implements DispatcherControl,Scheduled<Object> {
   
   public final static long DEFAULT_REDISPATCH_DELAY = 2000L;
-  
-  private final StateStore.Dispatcher dispatcher;
+
+  private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
   private final AmazonDynamoDBAsync dynamodb;
   private final RecordAdapter<RS> recordAdapter;
   private final long confirmationExpiration;
@@ -84,10 +83,10 @@ implements DispatcherControl,Scheduled<Object> {
     );
   }
   
-  private Void doDispatch(Dispatchable<?> dispatchable) {
-    Duration duration = Duration.between(dispatchable.createdAt, LocalDateTime.now());
+  private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
+    Duration duration = Duration.between(dispatchable.createdOn(), LocalDateTime.now());
     if (Math.abs(duration.toMillis()) > confirmationExpiration) {
-      dispatcher.dispatch(dispatchable.id, dispatchable.state);
+      dispatcher.dispatch(dispatchable);
     }
     return null;
   }
