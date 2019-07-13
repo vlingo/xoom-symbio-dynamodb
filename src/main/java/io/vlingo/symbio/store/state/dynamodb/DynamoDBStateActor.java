@@ -162,7 +162,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
                 try {
                     RS savedState = recordAdapter.unmarshallState(foundItem);
                     if (savedState.dataVersion > raw.dataVersion) {
-                        interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "Concurrent modification of: " + id)), id, state, stateVersion, sources, object);
+                        interest.writeResultedIn(Failure.of(new StorageException(Result.ConcurrencyViolation, "Concurrent modification of: " + id)), id, state, stateVersion, sources, object);
                         return;
                     }
                 } catch (Exception e) {

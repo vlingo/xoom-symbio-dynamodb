@@ -244,7 +244,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), newState.id, newState, newState.stateVersion, Source.none(), null);
 
         doWrite(stateStore, currentState.id, currentState, currentState.stateVersion, writeResultInterest);
-        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Failure.of(new StorageException(Result.ConcurrentyViolation, "")), currentState.id, currentState, currentState.stateVersion, Source.none(), null);
+        verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Failure.of(new StorageException(Result.ConcurrencyViolation, "")), currentState.id, currentState, currentState.stateVersion, Source.none(), null);
     }
 
     @Test
