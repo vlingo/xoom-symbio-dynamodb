@@ -6,9 +6,13 @@
 // one at https://mozilla.org/MPL/2.0/.
 package io.vlingo.symbio.store.state.dynamodb;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
+
 import io.vlingo.actors.Actor;
 import io.vlingo.common.Cancellable;
 import io.vlingo.common.Scheduled;
@@ -21,9 +25,6 @@ import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
-
-import java.time.Duration;
-import java.time.LocalDateTime;
 /**
  * DynamoDBDispatcherControlActor is responsible for ensuring that
  * dispatching of {@link Dispatchable dispatchables} occurs and
@@ -31,7 +32,7 @@ import java.time.LocalDateTime;
  */
 public class DynamoDBDispatcherControlActor<RS extends State<?>>  extends Actor
 implements DispatcherControl,Scheduled<Object> {
-  
+
   public final static long DEFAULT_REDISPATCH_DELAY = 2000L;
 
   private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
@@ -39,8 +40,8 @@ implements DispatcherControl,Scheduled<Object> {
   private final RecordAdapter<RS> recordAdapter;
   private final long confirmationExpiration;
   private final Cancellable cancellable;
-  
-  @SuppressWarnings("unchecked")
+
+  @SuppressWarnings({ "unchecked", "rawtypes" })
   public DynamoDBDispatcherControlActor(
     final Dispatcher dispatcher,
     final AmazonDynamoDBAsync dynamodb,
@@ -59,12 +60,12 @@ implements DispatcherControl,Scheduled<Object> {
       DEFAULT_REDISPATCH_DELAY,
       checkConfirmationExpirationInterval);
   }
-  
+
   @Override
   public void intervalSignal(Scheduled<Object> scheduled, Object data) {
     dispatchUnconfirmed();
   }
-  
+
   @Override
   public void confirmDispatched(String dispatchId, ConfirmDispatchedResultInterest interest) {
     dynamodb.deleteItemAsync(
@@ -74,7 +75,7 @@ implements DispatcherControl,Scheduled<Object> {
       new ConfirmDispatchableAsyncHandler(dispatchId, interest)
     );
   }
-  
+
   @Override
   public void dispatchUnconfirmed() {
     dynamodb.scanAsync(
@@ -82,7 +83,7 @@ implements DispatcherControl,Scheduled<Object> {
       new DispatchAsyncHandler<RS>(recordAdapter::unmarshallDispatchable, this::doDispatch)
     );
   }
-  
+
   private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
     Duration duration = Duration.between(dispatchable.createdOn(), LocalDateTime.now());
     if (Math.abs(duration.toMillis()) > confirmationExpiration) {
@@ -90,7 +91,7 @@ implements DispatcherControl,Scheduled<Object> {
     }
     return null;
   }
-  
+
   @Override
   public void stop() {
     if (cancellable != null)

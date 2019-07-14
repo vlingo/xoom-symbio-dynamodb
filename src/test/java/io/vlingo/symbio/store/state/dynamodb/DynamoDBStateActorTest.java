@@ -7,6 +7,25 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.UUID;
+
+import org.junit.After;
+import org.junit.AfterClass;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -23,6 +42,7 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+
 import io.vlingo.actors.World;
 import io.vlingo.common.Failure;
 import io.vlingo.common.Success;
@@ -44,24 +64,6 @@ import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected static final int DEFAULT_TIMEOUT = 6000;
@@ -107,7 +109,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected <S> void doWrite(StateStore store, String id, S state, int stateVersion, StateStore.WriteResultInterest interest) {
       store.write(id, state, stateVersion, interest);
     }
-    
+
     protected void doRead(StateStore store, String id, Class<?> type, StateStore.ReadResultInterest interest) {
       store.read(id, type, interest);
     }
@@ -115,7 +117,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected Entity1 randomState() {
       return new Entity1(UUID.randomUUID().toString(), random.nextInt(5_000_000));
     }
-    
+
     protected Entity1 newFor(Entity1 oldState) {
       return new Entity1(oldState.id, oldState.value, oldState.stateVersion + 1);
     }
@@ -129,6 +131,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected abstract RecordAdapter<RS> recordAdapter();
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() {
         createTable(TABLE_NAME);
         createTable(DISPATCHABLE_TABLE_NAME);

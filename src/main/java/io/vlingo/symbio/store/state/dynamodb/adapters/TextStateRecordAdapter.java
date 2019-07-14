@@ -7,7 +7,13 @@
 
 package io.vlingo.symbio.store.state.dynamodb.adapters;
 
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
+
 import io.vlingo.common.serialization.JsonSerialization;
 import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.Metadata;
@@ -15,15 +21,11 @@ import io.vlingo.symbio.State;
 import io.vlingo.symbio.State.TextState;
 import io.vlingo.symbio.store.dispatch.Dispatchable;
 
-import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-
 public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
     private static final String ID_FIELD = "Id";
     private static final String CREATED_AT_FIELD = "CreatedAt";
     private static final String STATE_FIELD = "State";
+    @SuppressWarnings("unused")
     private static final String ENTRIES = "entries";
     private static final String DATA_FIELD = "Data";
     private static final String TYPE_FIELD = "Type";
@@ -55,7 +57,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
             stateItem.put(STATE_FIELD, new AttributeValue().withS(JsonSerialization.serialized(dispatchable.state().get())));
         }
         //TODO add entities
-        
+
         return stateItem;
     }
 
