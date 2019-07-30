@@ -38,9 +38,21 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   }
 
   @Override
-  public Completes<List<T>> readNext(int maximumEntries) {
+  public Completes<T> readNext(final String fromId) {
+    seekTo(fromId);
+    return readNext();
+  }
+
+  @Override
+  public Completes<List<T>> readNext(final int maximumEntries) {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  @Override
+  public Completes<List<T>> readNext(final String fromId, final int maximumEntries) {
+    seekTo(fromId);
+    return readNext(maximumEntries);
   }
 
   @Override
@@ -49,7 +61,7 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   }
 
   @Override
-  public Completes<String> seekTo(String id) {
+  public Completes<String> seekTo(final String id) {
     return null;
   }
 
