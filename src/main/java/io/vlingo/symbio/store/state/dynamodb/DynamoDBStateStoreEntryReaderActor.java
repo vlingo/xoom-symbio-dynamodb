@@ -52,4 +52,9 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   public Completes<String> seekTo(String id) {
     return null;
   }
+
+  @Override
+  public Completes<Long> size() {
+    return completes().with(-1L);
+  }
 }
