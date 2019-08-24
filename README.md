@@ -1,7 +1,8 @@
 # vlingo-symbio-dynamodb
-Implementation of vlingo-symbio for Amazon AWS DynamoDB
 
 [![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-symbio-dynamodb) [![Build Status](https://travis-ci.org/vlingo/vlingo-symbio-dynamodb.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-symbio-dynamodb) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
+
+The vlingo/PLATFORM implementation of vlingo/symbio for Amazon AWS DynamoDB.
 
 ### State Storage
 The `StateStore` is a simple object storage mechanism that can be run against a number of persistence engines.
