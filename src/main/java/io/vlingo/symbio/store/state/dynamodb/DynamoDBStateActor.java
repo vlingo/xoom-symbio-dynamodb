@@ -7,12 +7,20 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
+import static java.util.Collections.singletonList;
+
+import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
+
 import io.vlingo.actors.Actor;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Completes;
@@ -35,13 +43,6 @@ import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
-
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static java.util.Collections.singletonList;
 
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
@@ -175,7 +176,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         }
 
         // TODO: Write sources
-        final List<Entry<?>> entries = entryAdapterProvider.asEntries(sources, metadata);// final List<Entry<?>> entries =
+        final List<Entry<?>> entries = entryAdapterProvider.asEntries(sources, stateVersion, metadata);// final List<Entry<?>> entries =
 
         Dispatchable<Entry<?>, RS> dispatchable = new Dispatchable<>(state.getClass().getName() + ":" + id, LocalDateTime.now(), raw, entries);
 
