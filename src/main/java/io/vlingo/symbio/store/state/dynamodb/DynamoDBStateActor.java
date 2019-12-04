@@ -22,6 +22,7 @@ import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
 import io.vlingo.actors.Actor;
+import io.vlingo.actors.ActorInstantiator;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Failure;
@@ -39,6 +40,8 @@ import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
+import io.vlingo.symbio.store.state.dynamodb.DynamoDBDispatcherControlActor.DynamoDBDispatcherControlInstantiator;
+import io.vlingo.symbio.store.state.dynamodb.DynamoDBStateStoreEntryReaderActor.DynamoDBStateStoreEntryReaderInstantiator;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
 import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
@@ -93,6 +96,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
      * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
      * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
      */
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public DynamoDBStateActor(
       Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
       AmazonDynamoDBAsync dynamodb,
@@ -113,7 +117,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
           DispatcherControl.class,
           Definition.has(
             DynamoDBDispatcherControlActor.class,
-            Definition.parameters(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
+            new DynamoDBDispatcherControlInstantiator(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
 
         dispatcher.controlWith(dispatcherControl);
     }
@@ -134,7 +138,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     public <ET extends Entry<?>> Completes<StateStoreEntryReader<ET>> entryReader(final String name) {
       StateStoreEntryReader<?> reader = entryReaders.get(name);
       if (reader == null) {
-        reader = childActorFor(StateStoreEntryReader.class, Definition.has(DynamoDBStateStoreEntryReaderActor.class, Definition.parameters(name)));
+        reader = childActorFor(StateStoreEntryReader.class, Definition.has(DynamoDBStateStoreEntryReaderActor.class, new DynamoDBStateStoreEntryReaderInstantiator(name)));
         entryReaders.put(name, reader);
       }
       return completes().with((StateStoreEntryReader<ET>) reader);
@@ -207,5 +211,37 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
       dispatcher.dispatch(dispatchable);
       return null;
+    }
+
+    public static class DynamoDBStateStoreInstantiator<RS extends State<?>> implements ActorInstantiator<DynamoDBStateActor<RS>> {
+      private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+      private final DispatcherControl dispatcherControl;
+      private final AmazonDynamoDBAsync dynamodb;
+      private final CreateTableInterest createTableInterest;
+      private final RecordAdapter<RS> recordAdapter;
+
+      public DynamoDBStateStoreInstantiator(
+              final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
+              final DispatcherControl dispatcherControl,
+              final AmazonDynamoDBAsync dynamodb,
+              final CreateTableInterest createTableInterest,
+              final RecordAdapter<RS> recordAdapter) {
+        this.dispatcher = dispatcher;
+        this.dispatcherControl = dispatcherControl;
+        this.dynamodb = dynamodb;
+        this.createTableInterest = createTableInterest;
+        this.recordAdapter = recordAdapter;
+      }
+
+      @Override
+      public DynamoDBStateActor<RS> instantiate() {
+        return new DynamoDBStateActor<>(dispatcher, dispatcherControl, dynamodb, createTableInterest, recordAdapter);
+      }
+
+      @Override
+      @SuppressWarnings({ "unchecked", "rawtypes" })
+      public Class<DynamoDBStateActor<RS>> type() {
+        return (Class) DynamoDBStateActor.class;
+      }
     }
 }

@@ -7,7 +7,16 @@
 
 package io.vlingo.symbio.store.state.dynamodb;
 
+import static org.mockito.Mockito.timeout;
+import static org.mockito.Mockito.verify;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+
+import org.junit.Before;
+
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
+
 import io.vlingo.actors.Definition;
 import io.vlingo.actors.World;
 import io.vlingo.symbio.Entry;
@@ -16,16 +25,11 @@ import io.vlingo.symbio.store.dispatch.Dispatchable;
 import io.vlingo.symbio.store.dispatch.Dispatcher;
 import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.symbio.store.state.dynamodb.DynamoDBDispatcherControlActor.DynamoDBDispatcherControlInstantiator;
+import io.vlingo.symbio.store.state.dynamodb.DynamoDBStateActor.DynamoDBStateStoreInstantiator;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
-import org.junit.Before;
-
-import java.time.LocalDateTime;
-import java.util.Collections;
-
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 
 public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState> {
 
@@ -46,7 +50,7 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
         DispatcherControl.class,
         Definition.has(
           DynamoDBDispatcherControlActor.class,
-          Definition.parameters(dispatcher, dynamodb, new TextStateRecordAdapter(), 1000L, 1000L)));
+          new DynamoDBDispatcherControlInstantiator<>(dispatcher, dynamodb, new TextStateRecordAdapter(), 1000L, 1000L)));
 
       stateStore = stateStoreProtocol(world, dispatcher, dispatcherControl, dynamodb, createTableInterest);
     }
@@ -55,7 +59,9 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
     protected StateStore stateStoreProtocol(World world, Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, DispatcherControl dispatcherControl, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
       return world.actorFor(
         StateStore.class,
-        Definition.has(DynamoDBStateActor.class, Definition.parameters(dispatcher, dispatcherControl, dynamodb, interest, new TextStateRecordAdapter()))
+        Definition.has(
+                DynamoDBStateActor.class,
+                new DynamoDBStateStoreInstantiator<>(dispatcher, dispatcherControl, dynamodb, interest, new TextStateRecordAdapter()))
       );
     }
 

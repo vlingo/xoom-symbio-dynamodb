@@ -14,6 +14,7 @@ import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 
 import io.vlingo.actors.Actor;
+import io.vlingo.actors.ActorInstantiator;
 import io.vlingo.common.Cancellable;
 import io.vlingo.common.Scheduled;
 import io.vlingo.symbio.Entry;
@@ -97,5 +98,42 @@ implements DispatcherControl,Scheduled<Object> {
     if (cancellable != null)
       cancellable.cancel();
     super.stop();
+  }
+
+  public static class DynamoDBDispatcherControlInstantiator<RS extends State<?>> implements ActorInstantiator<DynamoDBDispatcherControlActor<RS>> {
+    private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+    private final AmazonDynamoDBAsync dynamodb;
+    private final RecordAdapter<RS> recordAdapter;
+    private final long checkConfirmationExpirationInterval;
+    private final long confirmationExpiration;
+
+    public DynamoDBDispatcherControlInstantiator(
+            final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
+            final AmazonDynamoDBAsync dynamodb,
+            final RecordAdapter<RS> recordAdapter,
+            final long checkConfirmationExpirationInterval,
+            final long confirmationExpiration) {
+      this.dispatcher = dispatcher;
+      this.dynamodb = dynamodb;
+      this.recordAdapter = recordAdapter;
+      this.checkConfirmationExpirationInterval = checkConfirmationExpirationInterval;
+      this.confirmationExpiration = confirmationExpiration;
+    }
+
+    @Override
+    public DynamoDBDispatcherControlActor<RS> instantiate() {
+      return new DynamoDBDispatcherControlActor<>(
+              dispatcher,
+              dynamodb,
+              recordAdapter,
+              checkConfirmationExpirationInterval,
+              confirmationExpiration);
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Class<DynamoDBDispatcherControlActor<RS>> type() {
+      return (Class) DynamoDBDispatcherControlActor.class;
+    }
   }
 }

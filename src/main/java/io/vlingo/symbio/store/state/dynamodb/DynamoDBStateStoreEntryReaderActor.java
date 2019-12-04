@@ -10,6 +10,7 @@ package io.vlingo.symbio.store.state.dynamodb;
 import java.util.List;
 
 import io.vlingo.actors.Actor;
+import io.vlingo.actors.ActorInstantiator;
 import io.vlingo.common.Completes;
 import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
@@ -68,5 +69,24 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   @Override
   public Completes<Long> size() {
     return completes().with(-1L);
+  }
+
+  public static class DynamoDBStateStoreEntryReaderInstantiator<T extends Entry<?>> implements ActorInstantiator<DynamoDBStateStoreEntryReaderActor<T>> {
+    private final String name;
+
+    DynamoDBStateStoreEntryReaderInstantiator(final String name) {
+      this.name = name;
+    }
+
+    @Override
+    public DynamoDBStateStoreEntryReaderActor<T> instantiate() {
+      return new DynamoDBStateStoreEntryReaderActor<>(name);
+    }
+
+    @Override
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public Class<DynamoDBStateStoreEntryReaderActor<T>> type() {
+      return (Class) DynamoDBStateStoreEntryReaderActor.class;
+    }
   }
 }
