@@ -134,7 +134,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     }
 
     @Override
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public <ET extends Entry<?>> Completes<StateStoreEntryReader<ET>> entryReader(final String name) {
       StateStoreEntryReader<?> reader = entryReaders.get(name);
       if (reader == null) {
