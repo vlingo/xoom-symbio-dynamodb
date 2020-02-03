@@ -42,6 +42,8 @@ import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
 import com.amazonaws.services.dynamodbv2.model.KeyType;
 import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
+import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
+import com.amazonaws.services.dynamodbv2.model.StreamViewType;
 
 import io.vlingo.actors.World;
 import io.vlingo.common.Failure;
@@ -328,6 +330,10 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         keySchema.add(new KeySchemaElement().withAttributeName("Id").withKeyType(KeyType.HASH));
 
         CreateTableRequest request = new CreateTableRequest()
+                .withStreamSpecification(
+                        new StreamSpecification()
+                          .withStreamEnabled(true)
+                          .withStreamViewType(StreamViewType.NEW_IMAGE))
                 .withTableName(tableName)
                 .withKeySchema(keySchema)
                 .withAttributeDefinitions(attributeDefinitions)
