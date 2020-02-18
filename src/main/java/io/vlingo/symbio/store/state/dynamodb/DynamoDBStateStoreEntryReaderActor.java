@@ -72,6 +72,8 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   }
 
   public static class DynamoDBStateStoreEntryReaderInstantiator<T extends Entry<?>> implements ActorInstantiator<DynamoDBStateStoreEntryReaderActor<T>> {
+    private static final long serialVersionUID = -4399593112818745520L;
+
     private final String name;
 
     DynamoDBStateStoreEntryReaderInstantiator(final String name) {

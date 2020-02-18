@@ -87,6 +87,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected StateAdapterProvider stateAdapterProvider;
 
     protected World world;
+//    protected List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
     protected Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
     protected AmazonDynamoDBAsync dynamodb;
     protected CreateTableInterest createTableInterest;
@@ -126,8 +127,10 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
 
     protected abstract StateStore stateStoreProtocol(final World world, final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, final DispatcherControl dispatcherControl, final AmazonDynamoDBAsync dynamodb, final CreateTableInterest interest);
 
+//    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, Dispatchable<Entry<?>, RS> dispatchable);
     protected abstract void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, String id, Dispatchable<Entry<?>, RS> dispatchable);
 
+//    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, RS state);
     protected abstract void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, String id, RS state);
 
     protected abstract RecordAdapter<RS> recordAdapter();
@@ -260,6 +263,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, Source.none(), null);
 
         RS raw = stateAdapterProvider.asRaw(currentState.id, currentState, currentState.stateVersion);
+//        verifyDispatched(dispatchers, currentState.getClass().getName() + ":" + currentState.id, raw);
         verifyDispatched(dispatcher, currentState.getClass().getName() + ":" + currentState.id, raw);
 //        verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(state.type + ":" + state.id, state.asTextState());
     }
@@ -288,6 +292,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         Dispatchable<Entry<?>, RS> dispatchable = dispatchableByState(raw);
 
         dispatcherControl.dispatchUnconfirmed();
+//        verifyDispatched(dispatchers, dispatchable.id(), dispatchable);
         verifyDispatched(dispatcher, dispatchable.id(), dispatchable);
 //        verify(dispatcher).dispatch(dispatchable.id, stateFromDispatchable(dispatchable));
     }

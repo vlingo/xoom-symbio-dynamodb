@@ -8,6 +8,8 @@ package io.vlingo.symbio.store.state.dynamodb;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
+import java.util.Arrays;
+import java.util.List;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
@@ -36,22 +38,22 @@ implements DispatcherControl,Scheduled<Object> {
 
   public final static long DEFAULT_REDISPATCH_DELAY = 2000L;
 
-  private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+  private final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
   private final AmazonDynamoDBAsync dynamodb;
   private final RecordAdapter<RS> recordAdapter;
   private final long confirmationExpiration;
   private final Cancellable cancellable;
 
-  @SuppressWarnings({ "unchecked", "rawtypes" })
+  @SuppressWarnings("unchecked")
   public DynamoDBDispatcherControlActor(
-    final Dispatcher dispatcher,
+    final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers,
     final AmazonDynamoDBAsync dynamodb,
     final RecordAdapter<RS> recordAdapter,
     final long checkConfirmationExpirationInterval,
     final long confirmationExpiration)
   {
     super();
-    this.dispatcher = dispatcher;
+    this.dispatchers = dispatchers;
     this.dynamodb = dynamodb;
     this.recordAdapter = recordAdapter;
     this.confirmationExpiration = confirmationExpiration;
@@ -88,7 +90,7 @@ implements DispatcherControl,Scheduled<Object> {
   private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
     Duration duration = Duration.between(dispatchable.createdOn(), LocalDateTime.now());
     if (Math.abs(duration.toMillis()) > confirmationExpiration) {
-      dispatcher.dispatch(dispatchable);
+      dispatchers.forEach(d -> d.dispatch(dispatchable));
     }
     return null;
   }
@@ -101,11 +103,26 @@ implements DispatcherControl,Scheduled<Object> {
   }
 
   public static class DynamoDBDispatcherControlInstantiator<RS extends State<?>> implements ActorInstantiator<DynamoDBDispatcherControlActor<RS>> {
-    private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+    private static final long serialVersionUID = 7698155745427728286L;
+
+    private final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
     private final AmazonDynamoDBAsync dynamodb;
     private final RecordAdapter<RS> recordAdapter;
     private final long checkConfirmationExpirationInterval;
     private final long confirmationExpiration;
+
+    public DynamoDBDispatcherControlInstantiator(
+            final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers,
+            final AmazonDynamoDBAsync dynamodb,
+            final RecordAdapter<RS> recordAdapter,
+            final long checkConfirmationExpirationInterval,
+            final long confirmationExpiration) {
+      this.dispatchers = dispatchers;
+      this.dynamodb = dynamodb;
+      this.recordAdapter = recordAdapter;
+      this.checkConfirmationExpirationInterval = checkConfirmationExpirationInterval;
+      this.confirmationExpiration = confirmationExpiration;
+    }
 
     public DynamoDBDispatcherControlInstantiator(
             final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
@@ -113,17 +130,13 @@ implements DispatcherControl,Scheduled<Object> {
             final RecordAdapter<RS> recordAdapter,
             final long checkConfirmationExpirationInterval,
             final long confirmationExpiration) {
-      this.dispatcher = dispatcher;
-      this.dynamodb = dynamodb;
-      this.recordAdapter = recordAdapter;
-      this.checkConfirmationExpirationInterval = checkConfirmationExpirationInterval;
-      this.confirmationExpiration = confirmationExpiration;
+      this(Arrays.asList(dispatcher), dynamodb, recordAdapter, checkConfirmationExpirationInterval, confirmationExpiration);
     }
 
     @Override
     public DynamoDBDispatcherControlActor<RS> instantiate() {
       return new DynamoDBDispatcherControlActor<>(
-              dispatcher,
+              dispatchers,
               dynamodb,
               recordAdapter,
               checkConfirmationExpirationInterval,

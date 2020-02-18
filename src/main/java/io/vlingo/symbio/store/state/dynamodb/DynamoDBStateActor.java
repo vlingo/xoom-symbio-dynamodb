@@ -10,6 +10,7 @@ package io.vlingo.symbio.store.state.dynamodb;
 import static java.util.Collections.singletonList;
 
 import java.time.LocalDateTime;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -40,7 +41,6 @@ import io.vlingo.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.symbio.store.state.StateStore;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
 import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
-import io.vlingo.symbio.store.state.dynamodb.DynamoDBDispatcherControlActor.DynamoDBDispatcherControlInstantiator;
 import io.vlingo.symbio.store.state.dynamodb.DynamoDBStateStoreEntryReaderActor.DynamoDBStateStoreEntryReaderInstantiator;
 import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
@@ -49,14 +49,42 @@ import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
-    private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
-    private final DispatcherControl dispatcherControl;
+    private final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
     private final Map<String,StateStoreEntryReader<?>> entryReaders;
     private final EntryAdapterProvider entryAdapterProvider;
     private final StateAdapterProvider stateAdapterProvider;
     private final RecordAdapter<RS> recordAdapter;
+
+    /**
+     * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
+     *
+     * @param dispatchers the {@code List<Dispatcher<Dispatchable<Entry<?>, RS>>>} that will handle dispatching state changes
+     * @param dispatcherControl the {@code DispatcherControl} this will handle re-dispatching and dispatch confirmation
+     * @param dynamodb the {@code AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
+     * @param createTableInterest the {@code CreateTableInterest} that is responsible for table creation
+     * @param recordAdapter the {@code RecordAdapter} that is responsible for un/marshalling state
+     */
+    public DynamoDBStateActor(
+      List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers,
+      DispatcherControl dispatcherControl,
+      AmazonDynamoDBAsync dynamodb,
+      CreateTableInterest createTableInterest,
+      RecordAdapter<RS> recordAdapter)
+    {
+      this.dispatchers = dispatchers;
+      this.dynamodb = dynamodb;
+      this.createTableInterest = createTableInterest;
+      this.recordAdapter = recordAdapter;
+      this.entryAdapterProvider = EntryAdapterProvider.instance(stage().world());
+      this.stateAdapterProvider = StateAdapterProvider.instance(stage().world());
+      this.entryReaders = new HashMap<>();
+
+      createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
+
+      dispatchers.forEach(d -> d.controlWith(dispatcherControl));
+    }
 
     /**
      * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
@@ -74,52 +102,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       CreateTableInterest createTableInterest,
       RecordAdapter<RS> recordAdapter)
     {
-      this.dispatcher = dispatcher;
-      this.dynamodb = dynamodb;
-      this.createTableInterest = createTableInterest;
-      this.recordAdapter = recordAdapter;
-      this.dispatcherControl = dispatcherControl;
-      this.entryAdapterProvider = EntryAdapterProvider.instance(stage().world());
-      this.stateAdapterProvider = StateAdapterProvider.instance(stage().world());
-      this.entryReaders = new HashMap<>();
-
-      createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
-
-      dispatcher.controlWith(dispatcherControl);
-    }
-
-    /**
-     * Constructs a {@link DynamoDBStateActor} with the arguments.
-     *
-     * @param dispatcher the {@link Dispatcher} that will handle dispatching state changes
-     * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
-     * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
-     * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
-     */
-    @SuppressWarnings({ "unchecked", "rawtypes" })
-    public DynamoDBStateActor(
-      Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
-      AmazonDynamoDBAsync dynamodb,
-      CreateTableInterest createTableInterest,
-      RecordAdapter<RS> recordAdapter)
-    {
-        this.dispatcher = dispatcher;
-        this.dynamodb = dynamodb;
-        this.createTableInterest = createTableInterest;
-        this.recordAdapter = recordAdapter;
-        this.entryAdapterProvider = EntryAdapterProvider.instance(stage().world());
-        this.stateAdapterProvider = StateAdapterProvider.instance(stage().world());
-        this.entryReaders = new HashMap<>();
-
-        createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
-
-        this.dispatcherControl = stage().actorFor(
-          DispatcherControl.class,
-          Definition.has(
-            DynamoDBDispatcherControlActor.class,
-            new DynamoDBDispatcherControlInstantiator(dispatcher, dynamodb, recordAdapter, 1000L, 1000L)));
-
-        dispatcher.controlWith(dispatcherControl);
+      this(Arrays.asList(dispatcher), dispatcherControl, dynamodb, createTableInterest, recordAdapter);
     }
 
     @Override
@@ -186,7 +169,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(raw, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
-        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<S,RS,C>(id, state, stateVersion, sources, interest, object, dispatchable, dispatcher, this::doDispatch));
+        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<S,RS,C>(id, state, stateVersion, sources, interest, object, dispatchable, dispatchers, this::doDispatch));
     }
 
     private GetItemRequest readRequestFor(String id, Class<?> type) {
@@ -209,24 +192,26 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     }
 
     private Void doDispatch(Dispatchable<Entry<?>, RS> dispatchable) {
-      dispatcher.dispatch(dispatchable);
+      dispatchers.forEach(d -> d.dispatch(dispatchable));
       return null;
     }
 
     public static class DynamoDBStateStoreInstantiator<RS extends State<?>> implements ActorInstantiator<DynamoDBStateActor<RS>> {
-      private final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+      private static final long serialVersionUID = -4104107435844928168L;
+
+      private final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
       private final DispatcherControl dispatcherControl;
       private final AmazonDynamoDBAsync dynamodb;
       private final CreateTableInterest createTableInterest;
       private final RecordAdapter<RS> recordAdapter;
 
       public DynamoDBStateStoreInstantiator(
-              final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
+              final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers,
               final DispatcherControl dispatcherControl,
               final AmazonDynamoDBAsync dynamodb,
               final CreateTableInterest createTableInterest,
               final RecordAdapter<RS> recordAdapter) {
-        this.dispatcher = dispatcher;
+        this.dispatchers = dispatchers;
         this.dispatcherControl = dispatcherControl;
         this.dynamodb = dynamodb;
         this.createTableInterest = createTableInterest;
@@ -235,7 +220,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
       @Override
       public DynamoDBStateActor<RS> instantiate() {
-        return new DynamoDBStateActor<>(dispatcher, dispatcherControl, dynamodb, createTableInterest, recordAdapter);
+        return new DynamoDBStateActor<>(dispatchers, dispatcherControl, dynamodb, createTableInterest, recordAdapter);
       }
 
       @Override
