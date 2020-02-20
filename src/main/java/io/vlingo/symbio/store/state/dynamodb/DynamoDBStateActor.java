@@ -27,12 +27,14 @@ import io.vlingo.actors.ActorInstantiator;
 import io.vlingo.actors.Definition;
 import io.vlingo.common.Completes;
 import io.vlingo.common.Failure;
+import io.vlingo.reactivestreams.Stream;
 import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.EntryAdapterProvider;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.Source;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.StateAdapterProvider;
+import io.vlingo.symbio.store.QueryExpression;
 import io.vlingo.symbio.store.Result;
 import io.vlingo.symbio.store.StorageException;
 import io.vlingo.symbio.store.dispatch.Dispatchable;
@@ -110,6 +112,17 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       doGenericRead(id, type, interest, object);
     }
 
+    @Override
+    public Completes<Stream> streamAllOf(final Class<?> stateType) {
+      // TODO: Implement
+      return null;
+    }
+
+    @Override
+    public Completes<Stream> streamSomeUsing(final QueryExpression query) {
+      // TODO: Implement
+      return null;
+    }
 
     @Override
     public <S,C> void write(final String id, final S state, final int stateVersion, final List<Source<C>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
