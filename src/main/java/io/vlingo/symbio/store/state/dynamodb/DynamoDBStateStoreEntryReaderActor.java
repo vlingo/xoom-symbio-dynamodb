@@ -12,6 +12,7 @@ import java.util.List;
 import io.vlingo.actors.Actor;
 import io.vlingo.actors.ActorInstantiator;
 import io.vlingo.common.Completes;
+import io.vlingo.reactivestreams.Stream;
 import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.store.state.StateStoreEntryReader;
 
@@ -69,6 +70,11 @@ public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Acto
   @Override
   public Completes<Long> size() {
     return completes().with(-1L);
+  }
+
+  @Override
+  public Completes<Stream> streamAll() {
+    return null;
   }
 
   public static class DynamoDBStateStoreEntryReaderInstantiator<T extends Entry<?>> implements ActorInstantiator<DynamoDBStateStoreEntryReaderActor<T>> {
