@@ -2,7 +2,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.vlingo</groupId>
   <artifactId>vlingo-symbio-dynamodb</artifactId>
-  <version>1.2.10</version>
+  <version>1.2.11-SNAPSHOT</version>
   <name>vlingo-symbio-dynamodb</name>
   <description>Implementation of vlingo-symbio for JDBC.</description>
   <url>https://github.com/vlingo/vlingo-symbio-dynamodb</url>
@@ -110,22 +110,22 @@
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-common</artifactId>
-      <version>1.2.10</version>
+      <version>1.2.11-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-actors</artifactId>
-      <version>1.2.10</version>
+      <version>1.2.11-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-symbio</artifactId>
-      <version>1.2.10</version>
+      <version>1.2.11-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-streams</artifactId>
-      <version>1.2.10</version>
+      <version>1.2.11-SNAPSHOT</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
