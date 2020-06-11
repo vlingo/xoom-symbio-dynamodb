@@ -11,6 +11,7 @@ import static java.util.Collections.singletonList;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -110,6 +111,11 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     @Override
     public void read(String id, Class<?> type, ReadResultInterest interest, Object object) {
       doGenericRead(id, type, interest, object);
+    }
+
+    @Override
+    public void readAll(final Collection<TypedStateBundle> bundles, final ReadResultInterest interest, final Object object) {
+      // TODO: Implement
     }
 
     @Override
