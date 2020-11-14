@@ -19,6 +19,7 @@ import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.State.TextState;
+import io.vlingo.symbio.store.StoredTypes;
 import io.vlingo.symbio.store.dispatch.Dispatchable;
 
 public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
@@ -74,7 +75,7 @@ public final class TextStateRecordAdapter implements RecordAdapter<TextState> {
         try {
             return new State.TextState(
                     record.get(ID_FIELD).getS(),
-                    Class.forName(record.get(TYPE_FIELD).getS()),
+                    StoredTypes.forName(record.get(TYPE_FIELD).getS()),
                     Integer.valueOf(record.get(TYPE_VERSION_FIELD).getN()),
                     record.get(DATA_FIELD).getS(),
                     Integer.valueOf(record.get(DATA_VERSION_FIELD).getN()),

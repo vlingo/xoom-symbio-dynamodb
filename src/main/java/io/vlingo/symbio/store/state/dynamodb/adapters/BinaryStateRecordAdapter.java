@@ -13,6 +13,7 @@ import io.vlingo.symbio.Entry;
 import io.vlingo.symbio.Metadata;
 import io.vlingo.symbio.State;
 import io.vlingo.symbio.State.BinaryState;
+import io.vlingo.symbio.store.StoredTypes;
 import io.vlingo.symbio.store.dispatch.Dispatchable;
 
 import java.nio.ByteBuffer;
@@ -71,7 +72,7 @@ public final class BinaryStateRecordAdapter implements RecordAdapter<BinaryState
         try {
             return new State.BinaryState(
                     record.get(ID_FIELD).getS(),
-                    Class.forName(record.get(TYPE_FIELD).getS()),
+                    StoredTypes.forName(record.get(TYPE_FIELD).getS()),
                     Integer.valueOf(record.get(TYPE_VERSION_FIELD).getN()),
                     record.get(DATA_FIELD).getB().array(),
                     Integer.valueOf(record.get(DATA_VERSION_FIELD).getN()),
