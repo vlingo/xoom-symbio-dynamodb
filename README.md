@@ -1,6 +1,6 @@
 # vlingo-symbio-dynamodb
 
-[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-symbio-dynamodb) [![Build Status](https://travis-ci.org/vlingo/vlingo-symbio-dynamodb.svg?branch=master)](https://travis-ci.org/vlingo/vlingo-symbio-dynamodb) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
+[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-symbio-dynamodb) [![Build](https://github.com/vlingo/vlingo-symbio-dynamodb/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-symbio-dynamodb/actions?query=workflow%3ABuild) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
 
 The VLINGO/PLATFORM implementation of VLINGO/SYMBIO for Amazon AWS DynamoDB.
 
