@@ -2,7 +2,7 @@
 
 [![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-symbio-dynamodb) [![Build](https://github.com/vlingo/vlingo-symbio-dynamodb/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-symbio-dynamodb/actions?query=workflow%3ABuild) [ ![Download](https://api.bintray.com/packages/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/images/download.svg) ](https://bintray.com/vlingo/vlingo-platform-java/vlingo-symbio-dynamodb/_latestVersion) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
 
-The VLINGO/PLATFORM implementation of VLINGO/SYMBIO for Amazon AWS DynamoDB.
+The VLINGO XOOM platform SDK implementation of XOOM SYMBIO for Amazon AWS DynamoDB.
 
 Docs: https://docs.vlingo.io/vlingo-symbio
 
@@ -13,7 +13,8 @@ Available JDBC storage implementations:
    - DynamoDB Text Store: `DynamoDBTextStateActor`
    - DynamoDB Binary Store: `DynamoDBBinaryStateActor`
 
-We welcome you to add support for your favorite database!
+### Important
+If using snapshot builds [follow these instructions](https://github.com/vlingo/vlingo-platform#snapshots-repository) or you will experience failures.
 
 ### Bintray
 
