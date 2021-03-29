@@ -20,13 +20,13 @@ Available JDBC storage implementations:
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-symbio</artifactId>
-      <version>1.5.2</version>
+      <version>1.6.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.vlingo</groupId>
       <artifactId>vlingo-symbio-dynamodb</artifactId>
-      <version>1.5.2</version>
+      <version>1.6.0</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -34,8 +34,8 @@ Available JDBC storage implementations:
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-symbio:1.5.2'
-    compile 'io.vlingo:vlingo-symbio-dynamodb:1.5.2'
+    compile 'io.vlingo:vlingo-symbio:1.6.0'
+    compile 'io.vlingo:vlingo-symbio-dynamodb:1.6.0'
 }
 ```
 
