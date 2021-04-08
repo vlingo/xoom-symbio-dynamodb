@@ -5,16 +5,16 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state;
+package io.vlingo.xoom.symbio.store.state;
 
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 
-import io.vlingo.common.serialization.JsonSerialization;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.State.BinaryState;
-import io.vlingo.symbio.State.TextState;
-import io.vlingo.symbio.StateAdapter;
+import io.vlingo.xoom.common.serialization.JsonSerialization;
+import io.vlingo.xoom.symbio.Metadata;
+import io.vlingo.xoom.symbio.State.BinaryState;
+import io.vlingo.xoom.symbio.State.TextState;
+import io.vlingo.xoom.symbio.StateAdapter;
 
 public class Entity1 {
   public static final Metadata StdMetadata = Metadata.with("", "");

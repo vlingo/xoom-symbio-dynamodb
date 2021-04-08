@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb;
+package io.vlingo.xoom.symbio.store.state.dynamodb;
 
 import static org.junit.Assert.assertNull;
 import static org.mockito.Matchers.eq;
@@ -45,27 +45,27 @@ import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
 import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
 import com.amazonaws.services.dynamodbv2.model.StreamViewType;
 
-import io.vlingo.actors.World;
-import io.vlingo.common.Failure;
-import io.vlingo.common.Success;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.EntryAdapterProvider;
-import io.vlingo.symbio.Source;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.StateAdapterProvider;
-import io.vlingo.symbio.store.Result;
-import io.vlingo.symbio.store.StorageException;
-import io.vlingo.symbio.store.dispatch.ConfirmDispatchedResultInterest;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
-import io.vlingo.symbio.store.dispatch.Dispatcher;
-import io.vlingo.symbio.store.dispatch.DispatcherControl;
-import io.vlingo.symbio.store.state.Entity1;
-import io.vlingo.symbio.store.state.Entity1.Entity1BinaryStateAdapter;
-import io.vlingo.symbio.store.state.Entity1.Entity1TextStateAdapter;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
-import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
-import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import io.vlingo.xoom.actors.World;
+import io.vlingo.xoom.common.Failure;
+import io.vlingo.xoom.common.Success;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.EntryAdapterProvider;
+import io.vlingo.xoom.symbio.Source;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.StateAdapterProvider;
+import io.vlingo.xoom.symbio.store.Result;
+import io.vlingo.xoom.symbio.store.StorageException;
+import io.vlingo.xoom.symbio.store.dispatch.ConfirmDispatchedResultInterest;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatcher;
+import io.vlingo.xoom.symbio.store.dispatch.DispatcherControl;
+import io.vlingo.xoom.symbio.store.state.Entity1;
+import io.vlingo.xoom.symbio.store.state.Entity1.Entity1BinaryStateAdapter;
+import io.vlingo.xoom.symbio.store.state.Entity1.Entity1TextStateAdapter;
+import io.vlingo.xoom.symbio.store.state.StateStore;
+import io.vlingo.xoom.symbio.store.state.StateTypeStateStoreMap;
+import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
+import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected static final int DEFAULT_TIMEOUT = 6000;
@@ -73,8 +73,8 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     private static final String DYNAMODB_REGION = "eu-west-1";
     private static final AWSStaticCredentialsProvider DYNAMODB_CREDENTIALS = new AWSStaticCredentialsProvider(new BasicAWSCredentials("1", "2"));
     private static final AwsClientBuilder.EndpointConfiguration DYNAMODB_ENDPOINT_CONFIGURATION = new AwsClientBuilder.EndpointConfiguration(DYNAMODB_HOST, DYNAMODB_REGION);
-    private static final String TABLE_NAME = "vlingo_io_vlingo_symbio_store_state_Entity1";
-    private static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
+    private static final String TABLE_NAME = "xoom_io_xoom_symbio_store_state_Entity1";
+    private static final String DISPATCHABLE_TABLE_NAME = "xoom_dispatchables";
     private static DynamoDBProxyServer dynamodbServer;
 
     private StateStore.WriteResultInterest writeResultInterest;

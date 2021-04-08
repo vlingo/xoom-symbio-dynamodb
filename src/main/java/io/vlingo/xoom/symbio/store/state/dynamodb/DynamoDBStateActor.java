@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb;
+package io.vlingo.xoom.symbio.store.state.dynamodb;
 
 import static java.util.Collections.singletonList;
 
@@ -23,35 +23,35 @@ import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.PutRequest;
 import com.amazonaws.services.dynamodbv2.model.WriteRequest;
 
-import io.vlingo.actors.Actor;
-import io.vlingo.actors.ActorInstantiator;
-import io.vlingo.actors.Definition;
-import io.vlingo.common.Completes;
-import io.vlingo.common.Failure;
-import io.vlingo.reactivestreams.Stream;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.EntryAdapterProvider;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.Source;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.StateAdapterProvider;
-import io.vlingo.symbio.store.QueryExpression;
-import io.vlingo.symbio.store.Result;
-import io.vlingo.symbio.store.StorageException;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
-import io.vlingo.symbio.store.dispatch.Dispatcher;
-import io.vlingo.symbio.store.dispatch.DispatcherControl;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStoreEntryReader;
-import io.vlingo.symbio.store.state.StateTypeStateStoreMap;
-import io.vlingo.symbio.store.state.dynamodb.DynamoDBStateStoreEntryReaderActor.DynamoDBStateStoreEntryReaderInstantiator;
-import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
-import io.vlingo.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import io.vlingo.xoom.actors.Actor;
+import io.vlingo.xoom.actors.ActorInstantiator;
+import io.vlingo.xoom.actors.Definition;
+import io.vlingo.xoom.common.Completes;
+import io.vlingo.xoom.common.Failure;
+import io.vlingo.xoom.reactivestreams.Stream;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.EntryAdapterProvider;
+import io.vlingo.xoom.symbio.Metadata;
+import io.vlingo.xoom.symbio.Source;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.StateAdapterProvider;
+import io.vlingo.xoom.symbio.store.QueryExpression;
+import io.vlingo.xoom.symbio.store.Result;
+import io.vlingo.xoom.symbio.store.StorageException;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatcher;
+import io.vlingo.xoom.symbio.store.dispatch.DispatcherControl;
+import io.vlingo.xoom.symbio.store.state.StateStore;
+import io.vlingo.xoom.symbio.store.state.StateStoreEntryReader;
+import io.vlingo.xoom.symbio.store.state.StateTypeStateStoreMap;
+import io.vlingo.xoom.symbio.store.state.dynamodb.DynamoDBStateStoreEntryReaderActor.DynamoDBStateStoreEntryReaderInstantiator;
+import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
+import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
+import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
+import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
-    public static final String DISPATCHABLE_TABLE_NAME = "vlingo_dispatchables";
+    public static final String DISPATCHABLE_TABLE_NAME = "xoom_dispatchables";
     private final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
     private final AmazonDynamoDBAsync dynamodb;
     private final CreateTableInterest createTableInterest;
@@ -147,7 +147,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
     }
 
     protected final String tableFor(Class<?> type) {
-        String tableName = "vlingo_" + type.getCanonicalName().replace(".", "_");
+        String tableName = "xoom_" + type.getCanonicalName().replace(".", "_");
         StateTypeStateStoreMap.stateTypeToStoreName(type, tableName);
         return tableName;
     }

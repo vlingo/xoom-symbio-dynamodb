@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb;
+package io.vlingo.xoom.symbio.store.state.dynamodb;
 
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
@@ -19,19 +19,19 @@ import org.junit.Ignore;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 
-import io.vlingo.actors.Definition;
-import io.vlingo.actors.World;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.State.TextState;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
-import io.vlingo.symbio.store.dispatch.Dispatcher;
-import io.vlingo.symbio.store.dispatch.DispatcherControl;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.dynamodb.DynamoDBDispatcherControlActor.DynamoDBDispatcherControlInstantiator;
-import io.vlingo.symbio.store.state.dynamodb.DynamoDBStateActor.DynamoDBStateStoreInstantiator;
-import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
-import io.vlingo.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
-import io.vlingo.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import io.vlingo.xoom.actors.Definition;
+import io.vlingo.xoom.actors.World;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.State.TextState;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatcher;
+import io.vlingo.xoom.symbio.store.dispatch.DispatcherControl;
+import io.vlingo.xoom.symbio.store.state.StateStore;
+import io.vlingo.xoom.symbio.store.state.dynamodb.DynamoDBDispatcherControlActor.DynamoDBDispatcherControlInstantiator;
+import io.vlingo.xoom.symbio.store.state.dynamodb.DynamoDBStateActor.DynamoDBStateStoreInstantiator;
+import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
+import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
+import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
 
 @Ignore
 public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState> {

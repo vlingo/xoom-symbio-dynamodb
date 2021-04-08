@@ -5,13 +5,13 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.handlers;
+package io.vlingo.xoom.symbio.store.state.dynamodb.handlers;
 
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemResult;
-import io.vlingo.symbio.store.Result;
-import io.vlingo.symbio.store.dispatch.ConfirmDispatchedResultInterest;
+import io.vlingo.xoom.symbio.store.Result;
+import io.vlingo.xoom.symbio.store.dispatch.ConfirmDispatchedResultInterest;
 
 public class ConfirmDispatchableAsyncHandler implements AsyncHandler<DeleteItemRequest, DeleteItemResult> {
     private final String dispatchId;

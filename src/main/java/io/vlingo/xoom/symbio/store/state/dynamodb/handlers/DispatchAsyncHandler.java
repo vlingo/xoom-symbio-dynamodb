@@ -5,15 +5,15 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.handlers;
+package io.vlingo.xoom.symbio.store.state.dynamodb.handlers;
 
 import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanResult;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
 
 import java.util.List;
 import java.util.Map;

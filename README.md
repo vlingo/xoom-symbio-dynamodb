@@ -1,10 +1,10 @@
-# vlingo-symbio-dynamodb
+# xoom-symbio-dynamodb
 
-[![Javadocs](http://javadoc.io/badge/io.vlingo/vlingo-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo/vlingo-symbio-dynamodb) [![Build](https://github.com/vlingo/vlingo-symbio-dynamodb/workflows/Build/badge.svg)](https://github.com/vlingo/vlingo-symbio-dynamodb/actions?query=workflow%3ABuild) [![Download](https://img.shields.io/maven-central/v/io.vlingo/vlingo-symbio-dynamodb?label=maven)](https://search.maven.org/artifact/io.vlingo/vlingo-symbio-dynamodb) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
+[![Javadocs](http://javadoc.io/badge/io.vlingo.xoom/xoom-symbio-dynamodb.svg?color=brightgreen)](http://javadoc.io/doc/io.vlingo.xoom/xoom-symbio-dynamodb) [![Build](https://github.com/vlingo/xoom-symbio-dynamodb/workflows/Build/badge.svg)](https://github.com/vlingo/xoom-symbio-dynamodb/actions?query=workflow%3ABuild) [![Download](https://img.shields.io/maven-central/v/io.vlingo.xoom/xoom-symbio-dynamodb?label=maven)](https://search.maven.org/artifact/io.vlingo.xoom/xoom-symbio-dynamodb) [![Gitter chat](https://badges.gitter.im/gitterHQ/gitter.png)](https://gitter.im/vlingo-platform-java/symbio)
 
 The VLINGO XOOM platform SDK implementation of XOOM SYMBIO for Amazon AWS DynamoDB.
 
-Docs: https://docs.vlingo.io/vlingo-symbio
+Docs: https://docs.vlingo.io/xoom-symbio
 
 ### State Storage
 The `StateStore` is a simple object storage mechanism that can be run against a number of persistence engines.
@@ -18,14 +18,14 @@ Available JDBC storage implementations:
 ```xml
   <dependencies>
     <dependency>
-      <groupId>io.vlingo</groupId>
-      <artifactId>vlingo-symbio</artifactId>
+      <groupId>io.vlingo.xoom</groupId>
+      <artifactId>xoom-symbio</artifactId>
       <version>1.6.0</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
-      <groupId>io.vlingo</groupId>
-      <artifactId>vlingo-symbio-dynamodb</artifactId>
+      <groupId>io.vlingo.xoom</groupId>
+      <artifactId>xoom-symbio-dynamodb</artifactId>
       <version>1.6.0</version>
       <scope>compile</scope>
     </dependency>
@@ -34,8 +34,8 @@ Available JDBC storage implementations:
 
 ```gradle
 dependencies {
-    compile 'io.vlingo:vlingo-symbio:1.6.0'
-    compile 'io.vlingo:vlingo-symbio-dynamodb:1.6.0'
+    compile 'io.vlingo.xoom:xoom-symbio:1.6.0'
+    compile 'io.vlingo.xoom:xoom-symbio-dynamodb:1.6.0'
 }
 ```
 

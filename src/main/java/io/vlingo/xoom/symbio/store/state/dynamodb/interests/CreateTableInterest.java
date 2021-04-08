@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.interests;
+package io.vlingo.xoom.symbio.store.state.dynamodb.interests;
 
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 

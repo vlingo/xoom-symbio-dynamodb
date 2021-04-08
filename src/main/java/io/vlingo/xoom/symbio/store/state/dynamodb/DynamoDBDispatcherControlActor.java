@@ -4,7 +4,7 @@
 // Mozilla Public License, v. 2.0. If a copy of the MPL
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
-package io.vlingo.symbio.store.state.dynamodb;
+package io.vlingo.xoom.symbio.store.state.dynamodb;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -15,19 +15,19 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
 
-import io.vlingo.actors.Actor;
-import io.vlingo.actors.ActorInstantiator;
-import io.vlingo.common.Cancellable;
-import io.vlingo.common.Scheduled;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.dispatch.ConfirmDispatchedResultInterest;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
-import io.vlingo.symbio.store.dispatch.Dispatcher;
-import io.vlingo.symbio.store.dispatch.DispatcherControl;
-import io.vlingo.symbio.store.state.dynamodb.adapters.RecordAdapter;
-import io.vlingo.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
-import io.vlingo.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
+import io.vlingo.xoom.actors.Actor;
+import io.vlingo.xoom.actors.ActorInstantiator;
+import io.vlingo.xoom.common.Cancellable;
+import io.vlingo.xoom.common.Scheduled;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.store.dispatch.ConfirmDispatchedResultInterest;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatcher;
+import io.vlingo.xoom.symbio.store.dispatch.DispatcherControl;
+import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
+import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
+import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
 /**
  * DynamoDBDispatcherControlActor is responsible for ensuring that
  * dispatching of {@link Dispatchable dispatchables} occurs and

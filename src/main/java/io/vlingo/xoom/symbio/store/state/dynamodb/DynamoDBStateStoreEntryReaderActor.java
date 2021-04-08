@@ -5,16 +5,16 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb;
+package io.vlingo.xoom.symbio.store.state.dynamodb;
 
 import java.util.List;
 
-import io.vlingo.actors.Actor;
-import io.vlingo.actors.ActorInstantiator;
-import io.vlingo.common.Completes;
-import io.vlingo.reactivestreams.Stream;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.store.state.StateStoreEntryReader;
+import io.vlingo.xoom.actors.Actor;
+import io.vlingo.xoom.actors.ActorInstantiator;
+import io.vlingo.xoom.common.Completes;
+import io.vlingo.xoom.reactivestreams.Stream;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.store.state.StateStoreEntryReader;
 
 public class DynamoDBStateStoreEntryReaderActor<T extends Entry<?>> extends Actor implements StateStoreEntryReader<T> {
   private final String name;

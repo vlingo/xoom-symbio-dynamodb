@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.handlers;
+package io.vlingo.xoom.symbio.store.state.dynamodb.handlers;
 
 import java.util.Map;
 import java.util.function.Function;
@@ -15,13 +15,13 @@ import com.amazonaws.services.dynamodbv2.model.AttributeValue;
 import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
 import com.amazonaws.services.dynamodbv2.model.GetItemResult;
 
-import io.vlingo.common.Failure;
-import io.vlingo.common.Success;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.StateAdapterProvider;
-import io.vlingo.symbio.store.Result;
-import io.vlingo.symbio.store.StorageException;
-import io.vlingo.symbio.store.state.StateStore;
+import io.vlingo.xoom.common.Failure;
+import io.vlingo.xoom.common.Success;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.StateAdapterProvider;
+import io.vlingo.xoom.symbio.store.Result;
+import io.vlingo.xoom.symbio.store.StorageException;
+import io.vlingo.xoom.symbio.store.state.StateStore;
 
 public class GetEntityAsyncHandler<S, RS extends State<?>> implements AsyncHandler<GetItemRequest, GetItemResult> {
     private final String id;

@@ -5,7 +5,7 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.handlers;
+package io.vlingo.xoom.symbio.store.state.dynamodb.handlers;
 
 import java.util.Arrays;
 import java.util.List;
@@ -15,17 +15,17 @@ import com.amazonaws.handlers.AsyncHandler;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.BatchWriteItemResult;
 
-import io.vlingo.common.Failure;
-import io.vlingo.common.Success;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.Source;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.store.Result;
-import io.vlingo.symbio.store.StorageException;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
-import io.vlingo.symbio.store.dispatch.Dispatcher;
-import io.vlingo.symbio.store.state.StateStore;
-import io.vlingo.symbio.store.state.StateStore.WriteResultInterest;
+import io.vlingo.xoom.common.Failure;
+import io.vlingo.xoom.common.Success;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.Source;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.store.Result;
+import io.vlingo.xoom.symbio.store.StorageException;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatcher;
+import io.vlingo.xoom.symbio.store.state.StateStore;
+import io.vlingo.xoom.symbio.store.state.StateStore.WriteResultInterest;
 
 public class BatchWriteItemAsyncHandler<S,RS extends State<?>,C> implements AsyncHandler<BatchWriteItemRequest, BatchWriteItemResult> {
     private final String id;

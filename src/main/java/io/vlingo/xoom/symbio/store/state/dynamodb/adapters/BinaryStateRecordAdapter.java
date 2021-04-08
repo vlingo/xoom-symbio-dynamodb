@@ -5,16 +5,16 @@
 // was not distributed with this file, You can obtain
 // one at https://mozilla.org/MPL/2.0/.
 
-package io.vlingo.symbio.store.state.dynamodb.adapters;
+package io.vlingo.xoom.symbio.store.state.dynamodb.adapters;
 
 import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import io.vlingo.common.serialization.JsonSerialization;
-import io.vlingo.symbio.Entry;
-import io.vlingo.symbio.Metadata;
-import io.vlingo.symbio.State;
-import io.vlingo.symbio.State.BinaryState;
-import io.vlingo.symbio.store.StoredTypes;
-import io.vlingo.symbio.store.dispatch.Dispatchable;
+import io.vlingo.xoom.common.serialization.JsonSerialization;
+import io.vlingo.xoom.symbio.Entry;
+import io.vlingo.xoom.symbio.Metadata;
+import io.vlingo.xoom.symbio.State;
+import io.vlingo.xoom.symbio.State.BinaryState;
+import io.vlingo.xoom.symbio.store.StoredTypes;
+import io.vlingo.xoom.symbio.store.dispatch.Dispatchable;
 
 import java.nio.ByteBuffer;
 import java.time.LocalDateTime;
