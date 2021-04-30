@@ -20,13 +20,13 @@ Available JDBC storage implementations:
     <dependency>
       <groupId>io.vlingo.xoom</groupId>
       <artifactId>xoom-symbio</artifactId>
-      <version>1.7.0</version>
+      <version>1.7.5</version>
       <scope>compile</scope>
     </dependency>
     <dependency>
       <groupId>io.vlingo.xoom</groupId>
       <artifactId>xoom-symbio-dynamodb</artifactId>
-      <version>1.7.0</version>
+      <version>1.7.5</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -34,8 +34,8 @@ Available JDBC storage implementations:
 
 ```gradle
 dependencies {
-    compile 'io.vlingo.xoom:xoom-symbio:1.7.0'
-    compile 'io.vlingo.xoom:xoom-symbio-dynamodb:1.7.0'
+    compile 'io.vlingo.xoom:xoom-symbio:1.7.5'
+    compile 'io.vlingo.xoom:xoom-symbio-dynamodb:1.7.5'
 }
 ```
 
