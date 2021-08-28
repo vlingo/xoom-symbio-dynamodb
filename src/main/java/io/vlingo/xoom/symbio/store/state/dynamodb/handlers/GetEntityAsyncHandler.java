@@ -47,7 +47,7 @@ public class GetEntityAsyncHandler<S, RS extends State<?>> implements AsyncHandl
     public void onSuccess(GetItemRequest request, GetItemResult getItemResult) {
         Map<String, AttributeValue> item = getItemResult.getItem();
         if (item == null) {
-            interest.readResultedIn(Failure.of(new StorageException(Result.NotFound, "Iteam not found for: " + id)), id, null, -1, null, object);
+            interest.readResultedIn(Failure.of(new StorageException(Result.NotFound, "Item not found for: " + id)), id, null, -1, null, object);
             return;
         }
 

@@ -4,7 +4,7 @@
   <artifactId>xoom-symbio-dynamodb</artifactId>
   <version>1.8.6-SNAPSHOT</version>
   <name>xoom-symbio-dynamodb</name>
-  <description>Implementation of xoom-symbio for JDBC.</description>
+  <description>Implementation of xoom-symbio for DynamoDB.</description>
   <url>https://github.com/vlingo/xoom-symbio-dynamodb</url>
   <licenses>
     <license>
