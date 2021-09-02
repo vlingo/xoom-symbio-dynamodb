@@ -27,7 +27,6 @@ import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
 import org.junit.Before;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -56,7 +55,7 @@ public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryS
         DispatcherControl.class,
         Definition.has(
           DynamoDBDispatcherControlActor.class,
-          new DynamoDBDispatcherControlInstantiator(Arrays.asList(dispatchers), dynamodb, new BinaryStateRecordAdapter(), 1000L, 1000L)));
+          new DynamoDBDispatcherControlInstantiator(dispatchers, dynamodb, new BinaryStateRecordAdapter(), 1000L, 1000L)));
 
       stateStore = stateStoreProtocol(world, dispatchers, dispatcherControl, dynamodb, createTableInterest);
     }
