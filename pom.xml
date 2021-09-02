@@ -114,7 +114,7 @@
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
-      <version>1.2.3</version>
+      <version>1.2.5</version>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -140,18 +140,18 @@
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>DynamoDBLocal</artifactId>
-      <version>1.11.119</version>
+      <version>1.15.0</version>
       <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-dynamodb</artifactId>
-      <version>1.11.362</version>
+      <version>1.12.60</version>
     </dependency>
     <dependency>
       <groupId>com.amazonaws</groupId>
       <artifactId>aws-java-sdk-core</artifactId>
-      <version>1.11.362</version>
+      <version>1.12.60</version>
     </dependency>
     <dependency>
       <groupId>com.almworks.sqlite4java</groupId>

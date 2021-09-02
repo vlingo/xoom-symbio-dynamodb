@@ -6,15 +6,9 @@
 // one at https://mozilla.org/MPL/2.0/.
 package io.vlingo.xoom.symbio.store.state.dynamodb;
 
-import java.time.Duration;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
 import com.amazonaws.services.dynamodbv2.model.DeleteItemRequest;
 import com.amazonaws.services.dynamodbv2.model.ScanRequest;
-
 import io.vlingo.xoom.actors.Actor;
 import io.vlingo.xoom.actors.ActorInstantiator;
 import io.vlingo.xoom.common.Cancellable;
@@ -28,6 +22,11 @@ import io.vlingo.xoom.symbio.store.dispatch.DispatcherControl;
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.ConfirmDispatchableAsyncHandler;
 import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.DispatchAsyncHandler;
+
+import java.time.Duration;
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
 /**
  * DynamoDBDispatcherControlActor is responsible for ensuring that
  * dispatching of {@link Dispatchable dispatchables} occurs and
@@ -83,7 +82,7 @@ implements DispatcherControl,Scheduled<Object> {
   public void dispatchUnconfirmed() {
     dynamodb.scanAsync(
       new ScanRequest(DynamoDBStateActor.DISPATCHABLE_TABLE_NAME).withLimit(100),
-      new DispatchAsyncHandler<RS>(recordAdapter::unmarshallDispatchable, this::doDispatch)
+            new DispatchAsyncHandler<>(recordAdapter::unmarshallDispatchable, this::doDispatch)
     );
   }
 
@@ -130,7 +129,7 @@ implements DispatcherControl,Scheduled<Object> {
             final RecordAdapter<RS> recordAdapter,
             final long checkConfirmationExpirationInterval,
             final long confirmationExpiration) {
-      this(Arrays.asList(dispatcher), dynamodb, recordAdapter, checkConfirmationExpirationInterval, confirmationExpiration);
+      this(Collections.singletonList(dispatcher), dynamodb, recordAdapter, checkConfirmationExpirationInterval, confirmationExpiration);
     }
 
     @Override

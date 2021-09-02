@@ -7,34 +7,15 @@
 
 package io.vlingo.xoom.symbio.store.state.dynamodb;
 
-import static java.util.Collections.singletonList;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.BatchWriteItemRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemRequest;
-import com.amazonaws.services.dynamodbv2.model.PutRequest;
-import com.amazonaws.services.dynamodbv2.model.WriteRequest;
-
+import com.amazonaws.services.dynamodbv2.model.*;
 import io.vlingo.xoom.actors.Actor;
 import io.vlingo.xoom.actors.ActorInstantiator;
 import io.vlingo.xoom.actors.Definition;
 import io.vlingo.xoom.common.Completes;
 import io.vlingo.xoom.common.Failure;
 import io.vlingo.xoom.reactivestreams.Stream;
-import io.vlingo.xoom.symbio.Entry;
-import io.vlingo.xoom.symbio.EntryAdapterProvider;
-import io.vlingo.xoom.symbio.Metadata;
-import io.vlingo.xoom.symbio.Source;
-import io.vlingo.xoom.symbio.State;
-import io.vlingo.xoom.symbio.StateAdapterProvider;
+import io.vlingo.xoom.symbio.*;
 import io.vlingo.xoom.symbio.store.QueryExpression;
 import io.vlingo.xoom.symbio.store.Result;
 import io.vlingo.xoom.symbio.store.StorageException;
@@ -49,6 +30,14 @@ import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.BatchWriteItemAsyncHandler;
 import io.vlingo.xoom.symbio.store.state.dynamodb.handlers.GetEntityAsyncHandler;
 import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
+
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static java.util.Collections.singletonList;
 
 public class DynamoDBStateActor<RS extends State<?>> extends Actor implements StateStore {
     public static final String DISPATCHABLE_TABLE_NAME = "xoom_dispatchables";
@@ -87,25 +76,6 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       createTableInterest.createDispatchableTable(dynamodb, DISPATCHABLE_TABLE_NAME);
 
       dispatchers.forEach(d -> d.controlWith(dispatcherControl));
-    }
-
-    /**
-     * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
-     *
-     * @param dispatcher the {@link Dispatcher} that will handle dispatching state changes
-     * @param dispatcherControl the {@link DispatcherControl} this will handle resipatching and dispatch confirmation
-     * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
-     * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
-     * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
-     */
-    public DynamoDBStateActor(
-      Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
-      DispatcherControl dispatcherControl,
-      AmazonDynamoDBAsync dynamodb,
-      CreateTableInterest createTableInterest,
-      RecordAdapter<RS> recordAdapter)
-    {
-      this(Arrays.asList(dispatcher), dispatcherControl, dynamodb, createTableInterest, recordAdapter);
     }
 
     @Override
@@ -152,11 +122,11 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
         return tableName;
     }
 
-    private final void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest interest, final Object object) {
+    private void doGenericRead(String id, Class<?> type, StateStore.ReadResultInterest interest, final Object object) {
         dynamodb.getItemAsync(readRequestFor(id, type), new GetEntityAsyncHandler<>(id, interest, object, recordAdapter::unmarshallState, stateAdapterProvider));
     }
 
-    private final <S,C> void doGenericWrite(final String id, final S state, final int stateVersion, final List<Source<C>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
+    private <S,C> void doGenericWrite(final String id, final S state, final int stateVersion, final List<Source<C>> sources, final Metadata metadata, final WriteResultInterest interest, final Object object) {
         String tableName = tableFor(state.getClass());
         createTableInterest.createEntityTable(dynamodb, tableName);
         final RS raw = metadata == null ?
@@ -188,7 +158,7 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
 
         Map<String, List<WriteRequest>> transaction = writeRequestFor(raw, dispatchable);
         BatchWriteItemRequest request = new BatchWriteItemRequest(transaction);
-        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<S,RS,C>(id, state, stateVersion, sources, interest, object, dispatchable, dispatchers, this::doDispatch));
+        dynamodb.batchWriteItemAsync(request, new BatchWriteItemAsyncHandler<>(id, state, stateVersion, sources, interest, object, dispatchable, dispatchers, this::doDispatch));
     }
 
     private GetItemRequest readRequestFor(String id, Class<?> type) {
