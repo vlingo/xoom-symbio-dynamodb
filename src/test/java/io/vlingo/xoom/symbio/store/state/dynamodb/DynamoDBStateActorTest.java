@@ -73,7 +73,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     private static final String DYNAMODB_REGION = "eu-west-1";
     private static final AWSStaticCredentialsProvider DYNAMODB_CREDENTIALS = new AWSStaticCredentialsProvider(new BasicAWSCredentials("1", "2"));
     private static final AwsClientBuilder.EndpointConfiguration DYNAMODB_ENDPOINT_CONFIGURATION = new AwsClientBuilder.EndpointConfiguration(DYNAMODB_HOST, DYNAMODB_REGION);
-    private static final String TABLE_NAME = "xoom_io_xoom_symbio_store_state_Entity1";
+    private static final String TABLE_NAME = "xoom_io_vlingo_xoom_symbio_store_state_Entity1";
     private static final String DISPATCHABLE_TABLE_NAME = "xoom_dispatchables";
     private static DynamoDBProxyServer dynamodbServer;
 
