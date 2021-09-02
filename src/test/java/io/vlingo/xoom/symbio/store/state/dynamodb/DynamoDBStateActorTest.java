@@ -7,25 +7,6 @@
 
 package io.vlingo.xoom.symbio.store.state.dynamodb;
 
-import static org.junit.Assert.assertNull;
-import static org.mockito.Matchers.eq;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
-import java.util.UUID;
-
-import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import org.junit.Test;
-
 import com.amazonaws.auth.AWSStaticCredentialsProvider;
 import com.amazonaws.auth.BasicAWSCredentials;
 import com.amazonaws.client.builder.AwsClientBuilder;
@@ -35,24 +16,11 @@ import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsyncClient;
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBClientBuilder;
 import com.amazonaws.services.dynamodbv2.local.main.ServerRunner;
 import com.amazonaws.services.dynamodbv2.local.server.DynamoDBProxyServer;
-import com.amazonaws.services.dynamodbv2.model.AttributeDefinition;
-import com.amazonaws.services.dynamodbv2.model.AttributeValue;
-import com.amazonaws.services.dynamodbv2.model.CreateTableRequest;
-import com.amazonaws.services.dynamodbv2.model.GetItemResult;
-import com.amazonaws.services.dynamodbv2.model.KeySchemaElement;
-import com.amazonaws.services.dynamodbv2.model.KeyType;
-import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput;
-import com.amazonaws.services.dynamodbv2.model.StreamSpecification;
-import com.amazonaws.services.dynamodbv2.model.StreamViewType;
-
+import com.amazonaws.services.dynamodbv2.model.*;
 import io.vlingo.xoom.actors.World;
 import io.vlingo.xoom.common.Failure;
 import io.vlingo.xoom.common.Success;
-import io.vlingo.xoom.symbio.Entry;
-import io.vlingo.xoom.symbio.EntryAdapterProvider;
-import io.vlingo.xoom.symbio.Source;
-import io.vlingo.xoom.symbio.State;
-import io.vlingo.xoom.symbio.StateAdapterProvider;
+import io.vlingo.xoom.symbio.*;
 import io.vlingo.xoom.symbio.store.Result;
 import io.vlingo.xoom.symbio.store.StorageException;
 import io.vlingo.xoom.symbio.store.dispatch.ConfirmDispatchedResultInterest;
@@ -66,6 +34,13 @@ import io.vlingo.xoom.symbio.store.state.StateStore;
 import io.vlingo.xoom.symbio.store.state.StateTypeStateStoreMap;
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import org.junit.*;
+
+import java.util.*;
+
+import static org.junit.Assert.assertNull;
+import static org.mockito.Matchers.eq;
+import static org.mockito.Mockito.*;
 
 public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected static final int DEFAULT_TIMEOUT = 6000;
@@ -87,8 +62,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
     protected StateAdapterProvider stateAdapterProvider;
 
     protected World world;
-//    protected List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
-    protected Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher;
+    protected List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers;
     protected AmazonDynamoDBAsync dynamodb;
     protected CreateTableInterest createTableInterest;
     protected DispatcherControl dispatcherControl;
@@ -125,13 +99,11 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
       return new Entity1(oldState.id, oldState.value, oldState.stateVersion + 1);
     }
 
-    protected abstract StateStore stateStoreProtocol(final World world, final Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, final DispatcherControl dispatcherControl, final AmazonDynamoDBAsync dynamodb, final CreateTableInterest interest);
+    protected abstract StateStore stateStoreProtocol(final World world, final List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, final DispatcherControl dispatcherControl, final AmazonDynamoDBAsync dynamodb, final CreateTableInterest interest);
 
-//    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, Dispatchable<Entry<?>, RS> dispatchable);
-    protected abstract void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, String id, Dispatchable<Entry<?>, RS> dispatchable);
+    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, Dispatchable<Entry<?>, RS> dispatchable);
 
-//    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, RS state);
-    protected abstract void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher, String id, RS state);
+    protected abstract void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, RS>>> dispatchers, String id, RS state);
 
     protected abstract RecordAdapter<RS> recordAdapter();
 
@@ -161,7 +133,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         readResultInterest = mock(StateStore.ReadResultInterest.class);
         confirmDispatchedResultInterest = mock(ConfirmDispatchedResultInterest.class);
 
-        dispatcher = mock(Dispatcher.class);
+        dispatchers = Collections.singletonList(mock(Dispatcher.class));
 
         //store is created by setup() in subclasses
     }
@@ -263,9 +235,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, Source.none(), null);
 
         RS raw = stateAdapterProvider.asRaw(currentState.id, currentState, currentState.stateVersion);
-//        verifyDispatched(dispatchers, currentState.getClass().getName() + ":" + currentState.id, raw);
-        verifyDispatched(dispatcher, currentState.getClass().getName() + ":" + currentState.id, raw);
-//        verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(state.type + ":" + state.id, state.asTextState());
+        verifyDispatched(dispatchers, currentState.getClass().getName() + ":" + currentState.id, raw);
     }
 
     @Test
@@ -292,9 +262,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         Dispatchable<Entry<?>, RS> dispatchable = dispatchableByState(raw);
 
         dispatcherControl.dispatchUnconfirmed();
-//        verifyDispatched(dispatchers, dispatchable.id(), dispatchable);
-        verifyDispatched(dispatcher, dispatchable.id(), dispatchable);
-//        verify(dispatcher).dispatch(dispatchable.id, stateFromDispatchable(dispatchable));
+        verifyDispatched(dispatchers, dispatchable.id(), dispatchable);
     }
 
     @Test

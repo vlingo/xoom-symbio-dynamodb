@@ -7,18 +7,7 @@
 
 package io.vlingo.xoom.symbio.store.state.dynamodb;
 
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
-
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.Collections;
-
-import org.junit.Before;
-import org.junit.Ignore;
-
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBAsync;
-
 import io.vlingo.xoom.actors.Definition;
 import io.vlingo.xoom.actors.World;
 import io.vlingo.xoom.symbio.Entry;
@@ -32,8 +21,13 @@ import io.vlingo.xoom.symbio.store.state.dynamodb.DynamoDBStateActor.DynamoDBSta
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.TextStateRecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
-import org.mockito.internal.verification.AtLeast;
-import org.mockito.verification.VerificationMode;
+import org.junit.Before;
+
+import java.time.LocalDateTime;
+import java.util.Collections;
+import java.util.List;
+
+import static org.mockito.Mockito.*;
 
 public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState> {
 
@@ -54,35 +48,29 @@ public class DynamoDBTextStateActorTest extends DynamoDBStateActorTest<TextState
         DispatcherControl.class,
         Definition.has(
           DynamoDBDispatcherControlActor.class,
-          new DynamoDBDispatcherControlInstantiator<>(dispatcher, dynamodb, new TextStateRecordAdapter(), 1000L, 1000L)));
+          new DynamoDBDispatcherControlInstantiator<>(dispatchers, dynamodb, new TextStateRecordAdapter(), 1000L, 1000L)));
 
-      stateStore = stateStoreProtocol(world, dispatcher, dispatcherControl, dynamodb, createTableInterest);
+      stateStore = stateStoreProtocol(world, dispatchers, dispatcherControl, dynamodb, createTableInterest);
     }
 
     @Override
-    protected StateStore stateStoreProtocol(World world, Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, DispatcherControl dispatcherControl, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
+    protected StateStore stateStoreProtocol(World world, List<Dispatcher<Dispatchable<Entry<?>, TextState>>> dispatchers, DispatcherControl dispatcherControl, AmazonDynamoDBAsync dynamodb, CreateTableInterest interest) {
       return world.actorFor(
         StateStore.class,
         Definition.has(
                 DynamoDBStateActor.class,
-                new DynamoDBStateStoreInstantiator<>(Arrays.asList(dispatcher), dispatcherControl, dynamodb, interest, new TextStateRecordAdapter()))
+                new DynamoDBStateStoreInstantiator<>(dispatchers, dispatcherControl, dynamodb, interest, new TextStateRecordAdapter()))
       );
     }
 
     @Override
-//    protected void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, TextState>>> dispatchers, String id, Dispatchable<Entry<?>,TextState> dispatchable) {
-//      verify(dispatchers).dispatch(dispatchable);
-//    }
-    protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, String id, Dispatchable<Entry<?>,TextState> dispatchable) {
-      verify(dispatcher, new AtLeast(1)).dispatch(dispatchable);
+    protected void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, TextState>>> dispatchers, String id, Dispatchable<Entry<?>,TextState> dispatchable) {
+      dispatchers.forEach(dispatcher -> verify(dispatcher, atLeast(1)).dispatch(dispatchable));
     }
 
     @Override
-//    protected void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, TextState>>> dispatchers, String id, TextState state) {
-//      verify(dispatchers, timeout(DEFAULT_TIMEOUT)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
-//    }
-    protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, TextState>> dispatcher, String id, TextState state) {
-      verify(dispatcher, timeout(DEFAULT_TIMEOUT).atLeast(1)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
+    protected void verifyDispatched(List<Dispatcher<Dispatchable<Entry<?>, TextState>>> dispatchers, String id, TextState state) {
+      dispatchers.forEach(dispatcher -> verify(dispatcher, timeout(DEFAULT_TIMEOUT).atLeast(1)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList())));
     }
 
     @Override

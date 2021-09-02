@@ -89,25 +89,6 @@ public class DynamoDBStateActor<RS extends State<?>> extends Actor implements St
       dispatchers.forEach(d -> d.controlWith(dispatcherControl));
     }
 
-    /**
-     * NOTE: this constructor is intended <u>only</u> for supporting testing with mocks.
-     *
-     * @param dispatcher the {@link Dispatcher} that will handle dispatching state changes
-     * @param dispatcherControl the {@link DispatcherControl} this will handle resipatching and dispatch confirmation
-     * @param dynamodb the {@link AmazonDynamoDBAsync} that provide async access to Amazon DynamoDB
-     * @param createTableInterest the {@link CreateTableInterest} that is responsible for table creation
-     * @param recordAdapter the {@link RecordAdapter} that is responsible for un/marshalling state
-     */
-    public DynamoDBStateActor(
-      Dispatcher<Dispatchable<Entry<?>, RS>> dispatcher,
-      DispatcherControl dispatcherControl,
-      AmazonDynamoDBAsync dynamodb,
-      CreateTableInterest createTableInterest,
-      RecordAdapter<RS> recordAdapter)
-    {
-      this(Arrays.asList(dispatcher), dispatcherControl, dynamodb, createTableInterest, recordAdapter);
-    }
-
     @Override
     public void read(String id, Class<?> type, ReadResultInterest interest, Object object) {
       doGenericRead(id, type, interest, object);
