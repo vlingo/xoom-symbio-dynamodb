@@ -35,8 +35,8 @@ import io.vlingo.xoom.symbio.store.state.dynamodb.DynamoDBStateActor.DynamoDBSta
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.BinaryStateRecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.adapters.RecordAdapter;
 import io.vlingo.xoom.symbio.store.state.dynamodb.interests.CreateTableInterest;
+import org.mockito.internal.verification.AtLeast;
 
-@Ignore
 public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryState> {
 
     @Before
@@ -80,7 +80,7 @@ public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryS
 //        verify(dispatchers).dispatch(dispatchable);
 //    }
     protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, BinaryState>> dispatcher, String id, Dispatchable<Entry<?>,BinaryState> dispatchable) {
-      verify(dispatcher).dispatch(dispatchable);
+      verify(dispatcher, new AtLeast(1)).dispatch(dispatchable);
   }
 
     @Override
@@ -88,7 +88,7 @@ public class DynamoDBBinaryStateActorTest extends DynamoDBStateActorTest<BinaryS
 //        verify(dispatchers, timeout(DEFAULT_TIMEOUT)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
 //    }
     protected void verifyDispatched(Dispatcher<Dispatchable<Entry<?>, BinaryState>> dispatcher, String id, BinaryState state) {
-      verify(dispatcher, timeout(DEFAULT_TIMEOUT)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
+      verify(dispatcher, timeout(DEFAULT_TIMEOUT).atLeast(1)).dispatch(new Dispatchable<>(id, LocalDateTime.now(), state, Collections.emptyList()));
   }
 
     @Override
