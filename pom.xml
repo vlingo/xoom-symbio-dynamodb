@@ -181,6 +181,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
+      <groupId>io.github.ganadist.sqlite4java</groupId>
+      <artifactId>libsqlite4java-osx-aarch64</artifactId>
+      <version>1.0.392</version>
+      <type>dylib</type>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
       <groupId>com.almworks.sqlite4java</groupId>
       <artifactId>libsqlite4java-linux-i386</artifactId>
       <version>1.0.392</version>
