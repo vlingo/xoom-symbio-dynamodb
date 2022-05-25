@@ -156,7 +156,7 @@ public abstract class DynamoDBStateActorTest<RS extends State<?>> {
         verify(writeResultInterest, timeout(DEFAULT_TIMEOUT)).writeResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, Source.none(), null);
 
         doRead(stateStore, currentState.id, Entity1.class, readResultInterest);
-        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(Success.of(Result.Success), currentState.id, currentState, currentState.stateVersion, Entity1.StdMetadata, null);
+        verify(readResultInterest, timeout(DEFAULT_TIMEOUT)).readResultedIn(eq(Success.of(Result.Success)), eq(currentState.id), eq(currentState), eq(currentState.stateVersion), any(Metadata.class), eq(null));
     }
 
     @Test
